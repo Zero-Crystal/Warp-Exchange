@@ -1,0 +1,3 @@
+# Quotation Server
+server:
+  port: ${APP_PORT:8004}

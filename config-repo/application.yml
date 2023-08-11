@@ -1,0 +1,19 @@
+spring:
+  datasource:
+    url: jdbc:mysql://${DB_HOST:localhost}/${DB_NAME:exchange}?useSSL=false&allowMultiQueries=true&useUnicode=true&characterEncoding=utf8
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:password}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      auto-commit: false
+      connection-timeout: ${DB_TIMEOUT:3000}
+      validation-timeout: ${DB_TIMEOUT:3000}
+      max-lifetime: 600000
+      maximum-pool-size: ${DB_POOL_MAX:500}
+      minimum-idle: ${DB_POOL_IDEL:1}
+
+logging:
+  level:
+    root: ${LOGGING_ROOT_LEVEL:INFO}
+    org.apache.kafka: ${LOGGING_KAFKA_LEVEL:WARN}
+    com.exchange: ${LOGGING_EXCHANGE_LEVEL:INFO}

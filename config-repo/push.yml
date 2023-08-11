@@ -1,0 +1,3 @@
+# Push Server
+server:
+  port: ${APP_PORT:8005}

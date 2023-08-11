@@ -1,0 +1,7 @@
+spring:
+  application:
+    name: quotation
+
+  config:
+    import:
+      configserver: ${CONFIG_SERVER:http://localhost:8888}

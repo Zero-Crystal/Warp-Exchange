@@ -1,0 +1,3 @@
+# Trade-Engine Server
+server:
+  port: ${APP_PORT:8002}
