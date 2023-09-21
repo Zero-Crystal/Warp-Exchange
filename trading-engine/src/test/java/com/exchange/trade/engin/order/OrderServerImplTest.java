@@ -28,10 +28,10 @@ class OrderServerImplTest {
         orderService = new OrderServerImpl(assetServiceImpl);
 
         //init account A USD
-        assetServiceImpl.transfer(TransferType.AVAILABLE_TO_AVAILABLE, BASE_ACCOUNT, ACCOUNT_A,
+        assetServiceImpl.baseTransfer(TransferType.AVAILABLE_TO_AVAILABLE, BASE_ACCOUNT, ACCOUNT_A,
                 AssetType.USD, BigDecimal.valueOf(10000), false);
         //init account A BTC
-        assetServiceImpl.transfer(TransferType.AVAILABLE_TO_AVAILABLE, BASE_ACCOUNT, ACCOUNT_A,
+        assetServiceImpl.baseTransfer(TransferType.AVAILABLE_TO_AVAILABLE, BASE_ACCOUNT, ACCOUNT_A,
                 AssetType.BTC, BigDecimal.valueOf(12000), false);
     }
 

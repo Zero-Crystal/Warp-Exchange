@@ -3,29 +3,29 @@ package com.exchange.trade.engin.trade;
 import com.exchange.common.enums.AccountType;
 import com.exchange.common.enums.AssetType;
 import com.exchange.common.enums.Direction;
+import com.exchange.common.enums.MatchType;
 import com.exchange.common.message.event.AbstractEvent;
 import com.exchange.common.message.event.OrderCancelEvent;
 import com.exchange.common.message.event.OrderRequestEvent;
 import com.exchange.common.message.event.TransferEvent;
+import com.exchange.common.model.trade.MatchDetailEntity;
 import com.exchange.common.model.trade.OrderEntity;
 import com.exchange.common.support.LoggerSupport;
+import com.exchange.common.util.TradeUtil;
 import com.exchange.trade.engin.asset.entity.Asset;
 import com.exchange.trade.engin.asset.entity.TransferType;
 import com.exchange.trade.engin.asset.service.AssetService;
 import com.exchange.trade.engin.clearing.ClearingService;
 import com.exchange.trade.engin.match.model.MatchDetailRecord;
 import com.exchange.trade.engin.match.model.MatchResult;
-import com.exchange.trade.engin.match.model.OrderBook;
 import com.exchange.trade.engin.match.service.MatchService;
 import com.exchange.trade.engin.order.OrderService;
-import com.exchange.trade.engin.store.service.StoreService;
+import com.exchange.trade.engin.store.StoreService;
 import jakarta.annotation.PostConstruct;
-import jakarta.persistence.PrePersist;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.security.KeyStore;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -51,8 +51,8 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
     @Autowired
     private StoreService storeService;
 
-    @Autowired(required = false)
-    private ZoneId zoneId = ZoneId.systemDefault();
+    @Autowired
+    private TradeUtil tradeUtil;
 
     /**
      * 收集已完成的订单
@@ -60,18 +60,29 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
     private Queue<List<OrderEntity>> orderQueue = new ConcurrentLinkedQueue<>();
 
     /**
+     * 收集已完成撮合的撮合结果
+     * */
+    private Queue<List<MatchDetailEntity>> matchQueue = new ConcurrentLinkedQueue<>();
+
+    /**
      * 系统是否发生错误
      * */
     private boolean isSystemError = false;
 
+    /**
+     * 上一条消息的定序id
+     * */
     private long lastSequenceId;
 
-    private Thread orderThread;
+    /**
+     * 数据库存储线程
+     * */
+    private Thread dbThread;
 
     @PostConstruct
     public void init() {
-        orderThread = new Thread(this::runOnDbThread, "async-db");
-        orderThread.start();
+        dbThread = new Thread(this::runOnDbThread, "async-db");
+        dbThread.start();
     }
 
     @Override
@@ -125,15 +136,10 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
         }
     }
 
-    /**
-     * 新建订单
-     * */
-    void createOrder(OrderRequestEvent event) {
-        ZonedDateTime zonedDateTime = Instant.ofEpochMilli(event.createAt).atZone(zoneId);
-        Integer year = zonedDateTime.getYear();
-        Integer month = zonedDateTime.getMonth().getValue();
-        Long orderId = event.sequenceId * 10000 + (year * 100 + month);
+    @Override
+    public void createOrder(OrderRequestEvent event) {
         // 创建订单
+        Long orderId = tradeUtil.createOrderId(event.createAt, event.sequenceId);
         OrderEntity order = orderService.createOrder(event.createAt, orderId, event.sequenceId, event.accountId, event.price,
                 event.direction, event.quantity);
         if (order == null) {
@@ -146,6 +152,7 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
         // 清算结束，收集已完成的订单
         if (!matchResult.matchDetails.isEmpty()) {
             List<OrderEntity> finishOrders = new ArrayList<>();
+            List<MatchDetailEntity> finishMatches = new ArrayList<>();
             if (matchResult.takerOrder.status.isFinalStatus()) {
                 finishOrders.add(matchResult.takerOrder);
             }
@@ -153,15 +160,20 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
                 if (detailRecord.makerOrder().status.isFinalStatus()) {
                     finishOrders.add(detailRecord.makerOrder());
                 }
+                // 收集撮合结果
+                MatchDetailEntity takerMatch = generateMatchDetailEntity(event.sequenceId, event.createAt, detailRecord, true);
+                MatchDetailEntity makerMatch = generateMatchDetailEntity(event.sequenceId, event.createAt, detailRecord, false);
+                finishMatches.add(takerMatch);
+                finishMatches.add(makerMatch);
             }
+            // 异步写入数据库
             orderQueue.add(finishOrders);
+            matchQueue.add(finishMatches);
         }
     }
 
-    /**
-     * 取消订单
-     * */
-    void cancelOrder(OrderCancelEvent event) {
+    @Override
+    public void cancelOrder(OrderCancelEvent event) {
         OrderEntity order = orderService.getOrderByOrderId(event.orderId);
         if (order == null || order.id.longValue() != event.orderId.longValue()) {
             log.error("订单取消失败: {}", event);
@@ -171,11 +183,9 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
         clearingService.clearingCancel(order);
     }
 
-    /**
-     * 订单交易
-     * */
-    boolean transfer(TransferEvent event) {
-        boolean isSuccess = assetService.transfer(TransferType.AVAILABLE_TO_AVAILABLE, event.fromAccount, event.toAccount,
+    @Override
+    public boolean transfer(TransferEvent event) {
+        boolean isSuccess = assetService.baseTransfer(TransferType.AVAILABLE_TO_AVAILABLE, event.fromAccount, event.toAccount,
                 event.assetType, event.amount, true);
         return isSuccess;
     }
@@ -187,7 +197,7 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
         log.info("start batch insert into db...");
         for (;;) {
             try {
-                saveOrders();
+                saveToDb();
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -197,7 +207,27 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
     /**
      * 将已完成的订单保存至数据库
      * */
-    private void saveOrders() throws InterruptedException {
+    private void saveToDb() throws InterruptedException {
+        // 批量存储已完成撮合的撮合结果
+        if (!matchQueue.isEmpty()) {
+            List<MatchDetailEntity> preSaveMatch = new ArrayList<>(1000);
+            for (;;) {
+                List<MatchDetailEntity> pollMatchs = matchQueue.poll();
+                if (pollMatchs != null) {
+                    if (preSaveMatch.size() >= 1000) {
+                        break;
+                    }
+                    preSaveMatch.addAll(pollMatchs);
+                } else {
+                    break;
+                }
+            }
+            preSaveMatch.sort(MatchDetailEntity::compareTo);
+            if (log.isDebugEnabled()) {
+                log.debug("批量存储已完成撮合的撮合结果...");
+            }
+            storeService.insertIgnoreList(preSaveMatch);
+        }
         // 批量保存已完全交易成功的订单
         if (!orderQueue.isEmpty()) {
             List<OrderEntity> preSaveOrder = new ArrayList<>(1000);
@@ -208,10 +238,32 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
                         break;
                     }
                     preSaveOrder.addAll(pollOrders);
+                } else {
+                    break;
                 }
+            }
+            preSaveOrder.sort(OrderEntity::compareTo);
+            if (log.isDebugEnabled()) {
+                log.debug("批量存储已完成订单...");
             }
             storeService.insertIgnoreList(preSaveOrder);
         }
+    }
+
+    private MatchDetailEntity generateMatchDetailEntity(long sequenceId, long timestamp,
+                                                        MatchDetailRecord detail, boolean forTaker) {
+        MatchDetailEntity mde = new MatchDetailEntity();
+        mde.sequenceId = sequenceId;
+        mde.orderId = forTaker ? detail.takerOrder().id : detail.makerOrder().id;
+        mde.counterOrderId = forTaker ? detail.makerOrder().id : detail.takerOrder().id;
+        mde.account = forTaker ? detail.takerOrder().accountId : detail.makerOrder().accountId;
+        mde.counterAccount = forTaker ? detail.makerOrder().accountId : detail.takerOrder().accountId;
+        mde.type = forTaker ? MatchType.TAKER : MatchType.MACKER;
+        mde.direction = forTaker ? detail.takerOrder().direction : detail.makerOrder().direction;
+        mde.price = detail.price();
+        mde.quality = detail.quality();
+        mde.createAt = timestamp;
+        return mde;
     }
 
     /**

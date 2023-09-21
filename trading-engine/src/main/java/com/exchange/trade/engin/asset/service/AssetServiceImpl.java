@@ -41,7 +41,7 @@ public class AssetServiceImpl extends LoggerSupport implements AssetService {
 
     @Override
     public void assetTransfer(Long fromAccountId, Long toAccountId, AssetType assetType, BigDecimal amount) {
-        if (!transfer(TransferType.AVAILABLE_TO_AVAILABLE, fromAccountId, toAccountId, assetType, amount, true)) {
+        if (!baseTransfer(TransferType.AVAILABLE_TO_AVAILABLE, fromAccountId, toAccountId, assetType, amount, true)) {
             throw new RuntimeException("account " +  + fromAccountId + " transfer to account" + toAccountId
                     + " failed, amount=" + amount + ", asset type=" + assetType);
         }
@@ -53,7 +53,7 @@ public class AssetServiceImpl extends LoggerSupport implements AssetService {
 
     @Override
     public boolean assetFreeze(Long accountId, AssetType assetType, BigDecimal amount) {
-        boolean isFreezeOk = transfer(TransferType.AVAILABLE_TO_FROZEN, accountId, accountId, assetType, amount, true);
+        boolean isFreezeOk = baseTransfer(TransferType.AVAILABLE_TO_FROZEN, accountId, accountId, assetType, amount, true);
         if (isFreezeOk && log.isDebugEnabled()) {
             log.debug("account=[{}] frozen asset, amount={}, asset type={}", accountId, amount, assetType);
         }
@@ -62,7 +62,7 @@ public class AssetServiceImpl extends LoggerSupport implements AssetService {
 
     @Override
     public void assetUnFreeze(Long accountId, AssetType assetType, BigDecimal amount) {
-        if (!transfer(TransferType.FROZEN_TO_AVAILABLE, accountId, accountId, assetType, amount, true)) {
+        if (!baseTransfer(TransferType.FROZEN_TO_AVAILABLE, accountId, accountId, assetType, amount, true)) {
             throw new RuntimeException("account " + accountId + " unfrozen asset failed, amount=" + amount + ", asset type=" + assetType);
         }
         if (log.isDebugEnabled()) {
@@ -71,8 +71,8 @@ public class AssetServiceImpl extends LoggerSupport implements AssetService {
     }
 
     @Override
-    public boolean transfer(TransferType transferType, Long fromAccountId, Long toAccountId,
-                            AssetType assetType, BigDecimal amount, boolean checkBalance) {
+    public boolean baseTransfer(TransferType transferType, Long fromAccountId, Long toAccountId,
+                                AssetType assetType, BigDecimal amount, boolean checkBalance) {
         //检查转账金额
         if (amount.signum() == 0) {
             return true;

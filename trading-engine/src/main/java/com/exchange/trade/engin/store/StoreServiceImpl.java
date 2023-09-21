@@ -1,4 +1,4 @@
-package com.exchange.trade.engin.store.service;
+package com.exchange.trade.engin.store;
 
 import com.exchange.common.db.DbTemplate;
 import com.exchange.common.message.event.AbstractEvent;

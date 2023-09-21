@@ -8,7 +8,6 @@ import com.exchange.trade.engin.match.model.MatchDetailRecord;
 import com.exchange.trade.engin.match.model.MatchResult;
 import com.exchange.trade.engin.order.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -39,11 +38,11 @@ public class ClearingServiceImpl implements ClearingService {
                         assetService.assetUnFreeze(takerOrder.sequenceId, AssetType.USD, unfreezeQuote);
                     }
                     // 将买方USD转入卖方账户
-                    assetService.transfer(TransferType.FROZEN_TO_AVAILABLE,
+                    assetService.baseTransfer(TransferType.FROZEN_TO_AVAILABLE,
                             takerOrder.accountId, maker.accountId, AssetType.USD,
                             maker.price.multiply(matched), false);
                     // 将卖方BTC转入买方账户
-                    assetService.transfer(TransferType.FROZEN_TO_AVAILABLE,
+                    assetService.baseTransfer(TransferType.FROZEN_TO_AVAILABLE,
                             maker.accountId, takerOrder.accountId, AssetType.BTC, matched, false);
                     // 删除完全成交的maker
                     if (maker.unfilledQuantity.signum() == 0) {
@@ -60,10 +59,10 @@ public class ClearingServiceImpl implements ClearingService {
                     OrderEntity maker = matchDetail.makerOrder();
                     BigDecimal matched = matchDetail.quality();
                     // 将卖方的BTC转入买方的账户
-                    assetService.transfer(TransferType.FROZEN_TO_AVAILABLE, takerOrder.accountId, maker.accountId,
+                    assetService.baseTransfer(TransferType.FROZEN_TO_AVAILABLE, takerOrder.accountId, maker.accountId,
                             AssetType.BTC, matched, false);
                     // 将买方的USD转入卖方的账户
-                    assetService.transfer(TransferType.FROZEN_TO_AVAILABLE, maker.accountId, takerOrder.accountId,
+                    assetService.baseTransfer(TransferType.FROZEN_TO_AVAILABLE, maker.accountId, takerOrder.accountId,
                             AssetType.USD, maker.price.multiply(matched), false);
                     // 删除完全成交的maker
                     if (maker.unfilledQuantity.signum() == 0) {
@@ -75,7 +74,7 @@ public class ClearingServiceImpl implements ClearingService {
                     orderService.removeOrder(takerOrder.accountId, takerOrder.id);
                 }
             }
-            default -> throw new IllegalArgumentException("位置交易方向");
+            default -> throw new IllegalArgumentException("未知交易方向");
         }
     }
 

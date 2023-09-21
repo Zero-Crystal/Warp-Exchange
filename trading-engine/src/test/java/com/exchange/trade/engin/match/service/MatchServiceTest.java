@@ -38,10 +38,10 @@ class MatchServiceTest {
         orderService = new OrderServerImpl(assetServiceImpl);
 
         //init account A USD
-        assetServiceImpl.transfer(TransferType.AVAILABLE_TO_AVAILABLE, BASE_ACCOUNT, ACCOUNT_A,
+        assetServiceImpl.baseTransfer(TransferType.AVAILABLE_TO_AVAILABLE, BASE_ACCOUNT, ACCOUNT_A,
                 AssetType.USD, BigDecimal.valueOf(500000), false);
         //init account B BTC
-        assetServiceImpl.transfer(TransferType.AVAILABLE_TO_AVAILABLE, BASE_ACCOUNT, ACCOUNT_B,
+        assetServiceImpl.baseTransfer(TransferType.AVAILABLE_TO_AVAILABLE, BASE_ACCOUNT, ACCOUNT_B,
                 AssetType.BTC, BigDecimal.valueOf(300000), false);
 
         //init SELL order book

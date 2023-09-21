@@ -25,17 +25,17 @@ public class AssetServiceTest {
     public void initTest() {
         assetServiceImpl1 = new AssetServiceImpl();
         //init account A USD
-        assetServiceImpl1.transfer(TransferType.AVAILABLE_TO_AVAILABLE, BASE_ACCOUNT, ACCOUNT_A,
+        assetServiceImpl1.baseTransfer(TransferType.AVAILABLE_TO_AVAILABLE, BASE_ACCOUNT, ACCOUNT_A,
                 AssetType.USD, BigDecimal.valueOf(10000), false);
         //init account A BTC
-        assetServiceImpl1.transfer(TransferType.AVAILABLE_TO_AVAILABLE, BASE_ACCOUNT, ACCOUNT_A,
+        assetServiceImpl1.baseTransfer(TransferType.AVAILABLE_TO_AVAILABLE, BASE_ACCOUNT, ACCOUNT_A,
                 AssetType.BTC, BigDecimal.valueOf(12000), false);
 
         //init account B USD
-        assetServiceImpl1.transfer(TransferType.AVAILABLE_TO_AVAILABLE, BASE_ACCOUNT, ACCOUNT_B,
+        assetServiceImpl1.baseTransfer(TransferType.AVAILABLE_TO_AVAILABLE, BASE_ACCOUNT, ACCOUNT_B,
                 AssetType.USD, BigDecimal.valueOf(30000), false);
         //init account B BTC
-        assetServiceImpl1.transfer(TransferType.AVAILABLE_TO_AVAILABLE, BASE_ACCOUNT, ACCOUNT_B,
+        assetServiceImpl1.baseTransfer(TransferType.AVAILABLE_TO_AVAILABLE, BASE_ACCOUNT, ACCOUNT_B,
                 AssetType.BTC, BigDecimal.valueOf(50000), false);
     }
 

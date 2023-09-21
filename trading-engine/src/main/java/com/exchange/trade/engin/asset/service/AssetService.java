@@ -71,6 +71,6 @@ public interface AssetService {
      * @param amount 转账金额
      * @param checkBalance 是否需要检查余额
      * */
-    boolean transfer(TransferType transferType, Long fromAccountId, Long toAccountId,
-                     AssetType assetType, BigDecimal amount, boolean checkBalance);
+    boolean baseTransfer(TransferType transferType, Long fromAccountId, Long toAccountId,
+                         AssetType assetType, BigDecimal amount, boolean checkBalance);
 }
