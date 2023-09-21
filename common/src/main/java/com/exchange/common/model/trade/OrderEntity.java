@@ -1,8 +1,8 @@
-package com.exchange.common.module.trade;
+package com.exchange.common.model.trade;
 
 import com.exchange.common.enums.Direction;
 import com.exchange.common.enums.OrderStatus;
-import com.exchange.common.module.support.EntitySupport;
+import com.exchange.common.model.support.EntitySupport;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;

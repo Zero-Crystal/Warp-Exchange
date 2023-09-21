@@ -2,7 +2,7 @@ package com.exchange.trade.engin.match.model;
 
 import com.exchange.common.bean.OrderBookItemBean;
 import com.exchange.common.enums.Direction;
-import com.exchange.common.module.trade.OrderEntity;
+import com.exchange.common.model.trade.OrderEntity;
 
 import java.util.*;
 

@@ -1,9 +1,7 @@
 spring:
   application:
-    # \u670D\u52A1\u5668\u540D\u79F0
     name: trade-engine
 
   config:
-    # \u5BFC\u5165Config Server\u7684\u5730\u5740
     import:
       configserver: ${CONFIG_SERVER:http://localhost:8888}

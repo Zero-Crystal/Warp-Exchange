@@ -2,16 +2,17 @@ package com.exchange.trade.engin.order;
 
 import com.exchange.common.enums.AssetType;
 import com.exchange.common.enums.Direction;
-import com.exchange.common.module.trade.OrderEntity;
+import com.exchange.common.model.trade.OrderEntity;
 import com.exchange.trade.engin.asset.service.AssetService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-@Component
+@Service
 public class OrderServerImpl implements OrderService {
 
     private final AssetService assetService;

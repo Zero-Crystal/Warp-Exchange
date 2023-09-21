@@ -1,4 +1,4 @@
-package com.exchange.common.module.support;
+package com.exchange.common.model.support;
 
 public interface EntitySupport {
 

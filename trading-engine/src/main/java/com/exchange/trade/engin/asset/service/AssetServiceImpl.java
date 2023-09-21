@@ -91,35 +91,35 @@ public class AssetServiceImpl extends LoggerSupport implements AssetService {
         return switch (transferType) {
             case AVAILABLE_TO_AVAILABLE -> {
                 //检查转账方可用账户余额是否可用
-                if (checkBalance && fromAsset.available.compareTo(amount) < 0) {
-                    log.info("余额不可用, availableAsset={}, amount={}", fromAsset.available, amount);
+                if (checkBalance && fromAsset.getAvailable().compareTo(amount) < 0) {
+                    log.info("余额不可用, availableAsset={}, amount={}", fromAsset.getAvailable(), amount);
                     yield false;
                 }
                 //转账
-                fromAsset.available = fromAsset.available.subtract(amount);
-                toAsset.available = toAsset.available.add(amount);
+                fromAsset.setAvailable(fromAsset.getAvailable().subtract(amount));
+                toAsset.setAvailable(toAsset.getAvailable().add(amount));
                 yield true;
             }
             case AVAILABLE_TO_FROZEN -> {
                 //检查转账方可用账户余额是否可用
-                if (checkBalance && fromAsset.available.compareTo(amount) < 0) {
-                    log.info("余额不可用, availableAsset={}, amount={}", fromAsset.available, amount);
+                if (checkBalance && fromAsset.getAvailable().compareTo(amount) < 0) {
+                    log.info("余额不可用, availableAsset={}, amount={}", fromAsset.getAvailable(), amount);
                     yield false;
                 }
                 //冻结
-                fromAsset.available = fromAsset.available.subtract(amount);
-                toAsset.frozen = toAsset.frozen.add(amount);
+                fromAsset.setAvailable(fromAsset.getAvailable().subtract(amount));
+                toAsset.setFrozen(toAsset.getFrozen().add(amount));
                 yield true;
             }
             case FROZEN_TO_AVAILABLE -> {
                 //检查转账方冻结账户是否可用
-                if (checkBalance && fromAsset.frozen.compareTo(amount) < 0) {
-                    log.info("余额不可用, frozenAsset={}, amount={}", fromAsset.frozen, amount);
+                if (checkBalance && fromAsset.getFrozen().compareTo(amount) < 0) {
+                    log.info("余额不可用, frozenAsset={}, amount={}", fromAsset.getFrozen(), amount);
                     yield false;
                 }
                 //解冻
-                fromAsset.frozen = fromAsset.frozen.subtract(amount);
-                toAsset.available = toAsset.available.add(amount);
+                fromAsset.setFrozen(fromAsset.getFrozen().subtract(amount));
+                toAsset.setAvailable(toAsset.getAvailable().add(amount));
                 yield true;
             }
             default -> {

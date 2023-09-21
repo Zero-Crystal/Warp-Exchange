@@ -2,7 +2,7 @@ package com.exchange.trade.engin.match.service;
 
 import com.exchange.common.enums.AssetType;
 import com.exchange.common.enums.Direction;
-import com.exchange.common.module.trade.OrderEntity;
+import com.exchange.common.model.trade.OrderEntity;
 import com.exchange.trade.engin.asset.entity.TransferType;
 import com.exchange.trade.engin.asset.service.AssetServiceImpl;
 import com.exchange.trade.engin.match.model.MatchResult;
@@ -59,7 +59,7 @@ class MatchServiceTest {
         System.out.println("================================================================");
         OrderEntity order = createOrderEntity(ACCOUNT_B, BigDecimal.valueOf(201), BigDecimal.valueOf(8), Direction.BUY);
         System.out.println(order.toString());
-        MatchResult matchResult = matchService.processOrder(order.sequenceId, order, SELL_BOOK, BUY_BOOK);
+        MatchResult matchResult = matchService.matchOrder(order.sequenceId, order);
         System.out.println(matchResult);
         System.out.println("================================================================");
     }

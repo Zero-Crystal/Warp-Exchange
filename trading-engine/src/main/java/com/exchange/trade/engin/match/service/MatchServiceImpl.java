@@ -3,21 +3,22 @@ package com.exchange.trade.engin.match.service;
 import com.exchange.common.bean.OrderBookBean;
 import com.exchange.common.enums.Direction;
 import com.exchange.common.enums.OrderStatus;
-import com.exchange.common.module.trade.OrderEntity;
+import com.exchange.common.model.trade.OrderEntity;
 import com.exchange.trade.engin.match.model.MatchResult;
 import com.exchange.trade.engin.match.model.OrderBook;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 
-@Component
+@Service
 public class MatchServiceImpl implements MatchService {
 
-    public final OrderBook BUY_ORDER_BOOK = new OrderBook(Direction.BUY);
+    private final OrderBook BUY_ORDER_BOOK = new OrderBook(Direction.BUY);
 
-    public final OrderBook SELL_ORDER_BOOK = new OrderBook(Direction.SELL);
+    private final OrderBook SELL_ORDER_BOOK = new OrderBook(Direction.SELL);
 
-    public BigDecimal marketPrice = BigDecimal.ZERO;
+    private BigDecimal marketPrice = BigDecimal.ZERO;
 
     private long lastSequenceId = 0;
 
@@ -32,7 +33,44 @@ public class MatchServiceImpl implements MatchService {
     }
 
     @Override
-    public MatchResult processOrder(long sequenceId, OrderEntity takerOrder, OrderBook makerBook, OrderBook anotherBook) {
+    public void cancel(long ts, OrderEntity order) {
+        OrderBook orderBook = order.direction == Direction.BUY ? BUY_ORDER_BOOK : SELL_ORDER_BOOK;
+        if (!orderBook.remove(order)) {
+            throw new IllegalArgumentException("未找到该交易订单");
+        }
+        OrderStatus status = order.unfilledQuantity.compareTo(order.quantity) == 0 ? OrderStatus.FULLY_CANCELLED
+                : OrderStatus.PARTIAL_CANCELLED;
+        order.updateOrder(order.unfilledQuantity, status, ts);
+    }
+
+    @Override
+    public OrderBookBean getOrderBook(int maxDepth) {
+        return new OrderBookBean(lastSequenceId, marketPrice,
+                SELL_ORDER_BOOK.getOrderBooks(maxDepth), BUY_ORDER_BOOK.getOrderBooks(maxDepth));
+    }
+
+    @Override
+    public OrderBook getOrderBook(Direction direction) {
+        return switch (direction) {
+            case BUY -> BUY_ORDER_BOOK;
+            case SELL -> SELL_ORDER_BOOK;
+        };
+    }
+
+    @Override
+    public BigDecimal getMarketPrice() {
+        return marketPrice;
+    }
+
+    /**
+     * 订单撮合
+     * @param sequenceId 定序id
+     * @param takerOrder 输入订单
+     * @param makerBook 尝试匹配成交的OrderBook
+     * @param anotherBook 未能完全成交后挂单的OrderBook
+     * @return MatchResult 交易结果
+     * */
+    private MatchResult processOrder(long sequenceId, OrderEntity takerOrder, OrderBook makerBook, OrderBook anotherBook) {
         this.lastSequenceId = sequenceId;
         Long ts = takerOrder.createdAt;
         MatchResult matchResult = new MatchResult(takerOrder);
@@ -85,22 +123,5 @@ public class MatchServiceImpl implements MatchService {
             anotherBook.add(takerOrder);
         }
         return matchResult;
-    }
-
-    @Override
-    public void cancel(long ts, OrderEntity order) {
-        OrderBook orderBook = order.direction == Direction.BUY ? BUY_ORDER_BOOK : SELL_ORDER_BOOK;
-        if (!orderBook.remove(order)) {
-            throw new IllegalArgumentException("未找到该交易订单");
-        }
-        OrderStatus status = order.unfilledQuantity.compareTo(order.quantity) == 0 ? OrderStatus.FULLY_CANCELLED
-                : OrderStatus.PARTIAL_CANCELLED;
-        order.updateOrder(order.unfilledQuantity, status, ts);
-    }
-
-    @Override
-    public OrderBookBean getOrderBook(int maxDepth) {
-        return new OrderBookBean(lastSequenceId, marketPrice,
-                SELL_ORDER_BOOK.getOrderBooks(maxDepth), BUY_ORDER_BOOK.getOrderBooks(maxDepth));
     }
 }

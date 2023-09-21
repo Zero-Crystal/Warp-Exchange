@@ -1,3 +1,0 @@
-# Trade-Api Server
-server:
-  port: ${APP_PORT:8001}

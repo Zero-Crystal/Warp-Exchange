@@ -1,14 +1,18 @@
 package com.exchange.trade.engin.asset.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import lombok.Data;
+
 import java.math.BigDecimal;
 
 /**
  * 资产
  * */
+@Data
 public class Asset {
-    public BigDecimal available;
+    private BigDecimal available;
 
-    public BigDecimal frozen;
+    private BigDecimal frozen;
 
     public Asset() {
         this(BigDecimal.ZERO, BigDecimal.ZERO);
@@ -17,6 +21,11 @@ public class Asset {
     public Asset(BigDecimal available, BigDecimal frozen) {
         this.available = available;
         this.frozen = frozen;
+    }
+
+    @JsonIgnore
+    public BigDecimal getTotalAsset() {
+        return available.add(frozen);
     }
 
     @Override

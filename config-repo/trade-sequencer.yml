@@ -1,3 +1,0 @@
-# Trade-Sequencer Server
-server:
-  port: ${APP_PORT:8003}

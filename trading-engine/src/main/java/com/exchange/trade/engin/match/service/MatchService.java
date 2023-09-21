@@ -1,9 +1,12 @@
 package com.exchange.trade.engin.match.service;
 
 import com.exchange.common.bean.OrderBookBean;
-import com.exchange.common.module.trade.OrderEntity;
+import com.exchange.common.enums.Direction;
+import com.exchange.common.model.trade.OrderEntity;
 import com.exchange.trade.engin.match.model.MatchResult;
 import com.exchange.trade.engin.match.model.OrderBook;
+
+import java.math.BigDecimal;
 
 /**
  * 撮合引擎服务
@@ -19,16 +22,6 @@ public interface MatchService {
     MatchResult matchOrder(long sequenceId, OrderEntity order);
 
     /**
-     * 订单撮合
-     * @param sequenceId 定序id
-     * @param takerOrder 输入订单
-     * @param makerBook 尝试匹配成交的OrderBook
-     * @param anotherBook 未能完全成交后挂单的OrderBook
-     * @return MatchResult 交易结果
-     * */
-    MatchResult processOrder(long sequenceId, OrderEntity takerOrder, OrderBook makerBook, OrderBook anotherBook);
-
-    /**
      * 取消交易
      * @param ts
      * @param order
@@ -41,4 +34,17 @@ public interface MatchService {
      * @return OrderBook
      * */
     OrderBookBean getOrderBook(int maxDepth);
+
+    /**
+     * 获取订单簿
+     *
+     * @param direction 交易方向
+     * @return OrderBook
+     * */
+    OrderBook getOrderBook(Direction direction);
+
+    /**
+     * 获取市场价格
+     * */
+    BigDecimal getMarketPrice();
 }

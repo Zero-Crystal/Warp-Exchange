@@ -1,7 +1,7 @@
 package com.exchange.trade.engin.order;
 
 import com.exchange.common.enums.Direction;
-import com.exchange.common.module.trade.OrderEntity;
+import com.exchange.common.model.trade.OrderEntity;
 
 import java.math.BigDecimal;
 import java.util.concurrent.ConcurrentMap;

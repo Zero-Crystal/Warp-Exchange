@@ -51,13 +51,6 @@
             <artifactId>jakarta.persistence-api</artifactId>
         </dependency>
 
-        <!-- MyBatis -->
-        <!--<dependency>
-            <groupId>org.mybatis.spring.boot</groupId>
-            <artifactId>mybatis-spring-boot-starter</artifactId>
-            <version>3.0.2</version>
-        </dependency>-->
-
         <!-- kafka -->
         <dependency>
             <groupId>org.springframework.kafka</groupId>
@@ -80,6 +73,12 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-pool2</artifactId>
+        </dependency>
+
+        <!--lombok-->
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
         </dependency>
 
     </dependencies>

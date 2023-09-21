@@ -1,7 +1,7 @@
 package com.exchange.trade.engin.clearing;
 
 import com.exchange.common.enums.AssetType;
-import com.exchange.common.module.trade.OrderEntity;
+import com.exchange.common.model.trade.OrderEntity;
 import com.exchange.trade.engin.asset.entity.TransferType;
 import com.exchange.trade.engin.asset.service.AssetService;
 import com.exchange.trade.engin.match.model.MatchDetailRecord;
@@ -9,10 +9,11 @@ import com.exchange.trade.engin.match.model.MatchResult;
 import com.exchange.trade.engin.order.OrderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 
-@Component
+@Service
 public class ClearingServiceImpl implements ClearingService {
 
     private final AssetService assetService;
