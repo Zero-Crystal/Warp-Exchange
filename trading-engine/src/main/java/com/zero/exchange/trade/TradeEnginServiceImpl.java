@@ -1,4 +1,4 @@
-package com.zero.exchange.trade.impl;
+package com.zero.exchange.trade;
 
 import com.zero.exchange.enums.AccountType;
 import com.zero.exchange.enums.AssetType;

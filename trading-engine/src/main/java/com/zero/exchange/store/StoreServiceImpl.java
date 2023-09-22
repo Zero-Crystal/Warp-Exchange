@@ -1,4 +1,4 @@
-package com.zero.exchange.store.impl;
+package com.zero.exchange.store;
 
 import com.zero.exchange.db.DbTemplate;
 import com.zero.exchange.message.event.AbstractEvent;

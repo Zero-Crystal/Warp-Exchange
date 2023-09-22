@@ -7,22 +7,22 @@ import java.nio.charset.StandardCharsets;
 
 public class ClassPathUtil {
 
-    public static String readFile(String classPathFile) throws IOException {
-        try (InputStream input = ClassPathUtil.class.getResourceAsStream(classPathFile)) {
-            if (input == null) {
-                throw new IOException("Classpath file not found: " + classPathFile);
+    public static String readFile(String classPath) throws IOException {
+        try(InputStream inputStream = ClassPathUtil.class.getResourceAsStream(classPath)) {
+            if (inputStream == null) {
+                throw new IOException("class path [" + classPath + "] not found");
             }
-            return readAsString(input);
+            return readString(inputStream);
         }
     }
 
-    static byte[] readAsBytes(InputStream input) throws IOException {
-        ByteArrayOutputStream output = new ByteArrayOutputStream(1024 * 1024);
-        input.transferTo(output);
-        return output.toByteArray();
+    public static String readString(InputStream inputStream) throws IOException {
+        return new String(readBytes(inputStream), StandardCharsets.UTF_8);
     }
 
-    static String readAsString(InputStream input) throws IOException {
-        return new String(readAsBytes(input), StandardCharsets.UTF_8);
+    public static byte[] readBytes(InputStream inputStream) throws IOException {
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream(1024 * 1024);
+        inputStream.transferTo(outputStream);
+        return outputStream.toByteArray();
     }
 }
