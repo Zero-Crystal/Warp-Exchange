@@ -1,7 +1,5 @@
 spring:
   application:
     name: trade-engine
-
   config:
-    import:
-      configserver: ${CONFIG_SERVER:http://localhost:8888}
+    import: configserver:${CONFIG_SERVER:http://localhost:8888}

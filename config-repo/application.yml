@@ -1,3 +1,9 @@
+server:
+  tomcat:
+    # default tomcat settings:
+    use-forward-headers: ${TOMCAT_USE_FORWARD_HEADERS:true}
+    protocol-header: ${TOMCAT_PROTOCOL_HEADER:x-forwarded-proto}
+
 logging:
   level:
     root: ${LOGGING_ROOT_LEVEL:INFO}
