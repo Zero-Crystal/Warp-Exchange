@@ -4,6 +4,7 @@ import com.zero.exchange.enums.AccountType;
 import com.zero.exchange.enums.AssetType;
 import com.zero.exchange.enums.Direction;
 import com.zero.exchange.enums.MatchType;
+import com.zero.exchange.message.ApiResultMessage;
 import com.zero.exchange.message.NotificationMessage;
 import com.zero.exchange.message.TickMessage;
 import com.zero.exchange.message.event.AbstractEvent;
@@ -87,6 +88,10 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
      * 收集订单消息
      * */
     private Queue<NotificationMessage> notificationQueue = new ConcurrentLinkedQueue<>();
+    /**
+     * 收集订单创建结果
+     * */
+    private Queue<ApiResultMessage> apiResultQueue = new ConcurrentLinkedQueue<>();
 
     /**
      * 系统是否发生错误
@@ -109,6 +114,10 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
      * 发送订单消息通知
      * */
     private Thread notifyThread;
+    /**
+     * 发送订单创建结果消息
+     * */
+    private Thread apiResultThread;
 
     @PostConstruct
     public void init() {
@@ -119,6 +128,8 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
         tickThread.start();
         notifyThread = new Thread(this::runOnNotifyThread, "async-notify");
         notifyThread.start();
+        apiResultThread = new Thread(this::runOnApiResultThread, "async-api");
+        apiResultThread.start();
     }
 
     @Override
@@ -183,11 +194,15 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
                 event.direction, event.quantity);
         if (order == null) {
             log.error("订单[{}]创建失败：{}", orderId, event);
+            // 推送失败消息
+            apiResultQueue.add(ApiResultMessage.createOrderFailed(event.refId, event.createAt));
         }
         // 撮合
         MatchResult matchResult = matchService.matchOrder(event.sequenceId, order);
         // 清算
         clearingService.clearingMatchResult(matchResult);
+        // 推送成功结果，异步推送
+        apiResultQueue.add(ApiResultMessage.orderSuccess(event.refId, event.createAt, order.copy()));
         // 收集Notification
         List<NotificationMessage> notifyList = new ArrayList<>();
         notifyList.add(createNotificationMessage(event.createAt, "order_matched", order.accountId, order.copy()));
@@ -238,12 +253,18 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
     @Override
     public void cancelOrder(OrderCancelEvent event) {
         OrderEntity order = orderService.getOrderByOrderId(event.orderId);
-        if (order == null || order.id.longValue() != event.orderId.longValue()) {
+        // 未找到该订单或该订单不属于该用户
+        if (order == null || order.accountId.longValue() != event.accountId.longValue()) {
             log.error("订单取消失败: {}", event);
+            // 发送失败消息
+            apiResultQueue.add(ApiResultMessage.cancelOrderFailed(event.refId, event.createAt));
             return;
         }
         matchService.cancel(event.createAt, order);
         clearingService.clearingCancel(order);
+        // 发送成功消息
+        notificationQueue.add(createNotificationMessage(event.createAt, "order_cancel", order.accountId, order));
+        apiResultQueue.add(ApiResultMessage.cancelOrderFailed(event.refId, event.createAt));
     }
 
     @Override
@@ -302,6 +323,9 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
         }
     }
 
+    /**
+     * redis 发布匹配成功的订单消息
+     * */
     private void runOnNotifyThread() {
         log.info("start to send notification message...");
         for (;;) {
@@ -311,6 +335,29 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
                     log.debug("使用redis发布一条订单消息: {}", JsonUtil.writeJson(message));
                 }
                 redisService.publish(RedisCache.Topic.NOTIFICATION, JsonUtil.writeJson(message));
+            } else {
+                try {
+                    Thread.sleep(1);
+                } catch (InterruptedException e) {
+                    log.error("publish redis message [{}] is interrupt....", Thread.currentThread().getName());
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    /**
+     * redis 发布订单创建消息
+     * */
+    private void runOnApiResultThread() {
+        log.info("start to send order api result message...");
+        for (;;) {
+            ApiResultMessage message = apiResultQueue.poll();
+            if (message != null) {
+                if (log.isDebugEnabled()) {
+                    log.debug("使用redis发布一条订单创建结果消息: {}", JsonUtil.writeJson(message));
+                }
+                redisService.publish(RedisCache.Topic.TRADE_API_RESULT, JsonUtil.writeJson(message));
             } else {
                 try {
                     Thread.sleep(1);
