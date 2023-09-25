@@ -4,6 +4,7 @@ import com.zero.exchange.enums.AccountType;
 import com.zero.exchange.enums.AssetType;
 import com.zero.exchange.enums.Direction;
 import com.zero.exchange.enums.MatchType;
+import com.zero.exchange.message.NotificationMessage;
 import com.zero.exchange.message.TickMessage;
 import com.zero.exchange.message.event.AbstractEvent;
 import com.zero.exchange.message.event.OrderCancelEvent;
@@ -15,6 +16,8 @@ import com.zero.exchange.model.messaging.MessagingFactory;
 import com.zero.exchange.model.quotation.TickEntity;
 import com.zero.exchange.model.trade.MatchDetailEntity;
 import com.zero.exchange.model.trade.OrderEntity;
+import com.zero.exchange.redis.RedisCache;
+import com.zero.exchange.redis.RedisService;
 import com.zero.exchange.support.LoggerSupport;
 import com.zero.exchange.asset.entity.Asset;
 import com.zero.exchange.asset.entity.TransferType;
@@ -26,6 +29,7 @@ import com.zero.exchange.match.model.MatchDetailRecord;
 import com.zero.exchange.match.model.MatchResult;
 import com.zero.exchange.order.OrderService;
 import com.zero.exchange.trade.TradeEnginService;
+import com.zero.exchange.util.JsonUtil;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -60,6 +64,9 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
     private StoreService storeService;
 
     @Autowired
+    private RedisService redisService;
+
+    @Autowired
     private MessagingFactory messagingFactory;
 
     private MessageProducer<TickMessage> producer;
@@ -76,6 +83,10 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
      * ...
      * */
     private Queue<TickMessage> tickQueue = new ConcurrentLinkedQueue<>();
+    /**
+     * 收集订单消息
+     * */
+    private Queue<NotificationMessage> notificationQueue = new ConcurrentLinkedQueue<>();
 
     /**
      * 系统是否发生错误
@@ -94,6 +105,10 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
      * ...
      * */
     private Thread tickThread;
+    /**
+     * 发送订单消息通知
+     * */
+    private Thread notifyThread;
 
     @PostConstruct
     public void init() {
@@ -102,6 +117,8 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
         dbThread.start();
         tickThread = new Thread(this::runOnTickThread, "async-tick");
         tickThread.start();
+        notifyThread = new Thread(this::runOnNotifyThread, "async-notify");
+        notifyThread.start();
     }
 
     @Override
@@ -171,6 +188,9 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
         MatchResult matchResult = matchService.matchOrder(event.sequenceId, order);
         // 清算
         clearingService.clearingMatchResult(matchResult);
+        // 收集Notification
+        List<NotificationMessage> notifyList = new ArrayList<>();
+        notifyList.add(createNotificationMessage(event.createAt, "order_matched", order.accountId, order.copy()));
         // 清算结束，收集已完成的订单
         if (!matchResult.matchDetails.isEmpty()) {
             List<OrderEntity> closeOrders = new ArrayList<>();
@@ -180,8 +200,10 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
                 closeOrders.add(matchResult.takerOrder);
             }
             for (MatchDetailRecord detailRecord : matchResult.matchDetails) {
-                if (detailRecord.makerOrder().status.isFinalStatus()) {
-                    closeOrders.add(detailRecord.makerOrder());
+                OrderEntity maker = detailRecord.makerOrder();
+                notifyList.add(createNotificationMessage(event.createAt, "order_matched", maker.accountId, maker.copy()));
+                if (maker.status.isFinalStatus()) {
+                    closeOrders.add(maker);
                 }
                 // 收集撮合结果
                 MatchDetailEntity takerMatch = generateMatchDetailEntity(event.sequenceId, event.createAt, detailRecord, true);
@@ -191,7 +213,7 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
                 // 收集ticks
                 TickEntity tick = new TickEntity();
                 tick.sequenceId = event.sequenceId;
-                tick.makerOrderId = detailRecord.makerOrder().id;
+                tick.makerOrderId = maker.id;
                 tick.takerOrderId = detailRecord.takerOrder().id;
                 tick.takerDirection = detailRecord.takerOrder().direction == Direction.BUY;
                 tick.price = detailRecord.price();
@@ -208,6 +230,8 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
             tickMessage.sequenceId = event.sequenceId;
             tickMessage.createAt = event.createAt;
             tickQueue.add(tickMessage);
+            // 异步发送消息通知
+            notificationQueue.addAll(notifyList);
         }
     }
 
@@ -271,7 +295,27 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
                     // 暂停 1 ms
                     Thread.sleep(1);
                 } catch (InterruptedException e) {
-                    log.error("{} is interrupted...", Thread.currentThread().getName());
+                    log.error("send kafka message [{}] is interrupted...", Thread.currentThread().getName());
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    private void runOnNotifyThread() {
+        log.info("start to send notification message...");
+        for (;;) {
+            NotificationMessage message = this.notificationQueue.poll();
+            if (message != null) {
+                if (log.isDebugEnabled()) {
+                    log.debug("使用redis发布一条订单消息: {}", JsonUtil.writeJson(message));
+                }
+                redisService.publish(RedisCache.Topic.NOTIFICATION, JsonUtil.writeJson(message));
+            } else {
+                try {
+                    Thread.sleep(1);
+                } catch (InterruptedException e) {
+                    log.error("publish redis message [{}] is interrupt....", Thread.currentThread().getName());
                     e.printStackTrace();
                 }
             }
@@ -326,6 +370,12 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
 
     /**
      * 创建撮合结果实体类
+     *
+     * @param sequenceId 定序id
+     * @param timestamp 创建时间
+     * @param detail 撮合结果
+     * @param forTaker boolean 是否是挂单
+     * @return MatchDetailEntity
      * */
     private MatchDetailEntity generateMatchDetailEntity(long sequenceId, long timestamp,
                                                         MatchDetailRecord detail, boolean forTaker) {
@@ -341,6 +391,24 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
         mde.quantity = detail.quantity();
         mde.createdAt = timestamp;
         return mde;
+    }
+
+    /**
+     * 创建消息通知实体类
+     *
+     * @param ts long 时间戳
+     * @param type 消息类型
+     * @param account 用户账号
+     * @param data 消息数据
+     * @return NotificationMessage
+     * */
+    private NotificationMessage createNotificationMessage(long ts, String type, Long account, Object data) {
+        NotificationMessage message = new NotificationMessage();
+        message.createAt = ts;
+        message.type = type;
+        message.account = account;
+        message.data = data;
+        return message;
     }
 
     /**
