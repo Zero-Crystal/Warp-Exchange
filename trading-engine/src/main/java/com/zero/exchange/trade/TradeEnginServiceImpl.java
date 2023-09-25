@@ -1,5 +1,6 @@
 package com.zero.exchange.trade;
 
+import com.zero.exchange.bean.OrderBookBean;
 import com.zero.exchange.enums.AccountType;
 import com.zero.exchange.enums.AssetType;
 import com.zero.exchange.enums.Direction;
@@ -11,6 +12,7 @@ import com.zero.exchange.message.event.AbstractEvent;
 import com.zero.exchange.message.event.OrderCancelEvent;
 import com.zero.exchange.message.event.OrderRequestEvent;
 import com.zero.exchange.message.event.TransferEvent;
+import com.zero.exchange.model.messaging.MessageConsumer;
 import com.zero.exchange.model.messaging.MessageProducer;
 import com.zero.exchange.model.messaging.MessageTopic;
 import com.zero.exchange.model.messaging.MessagingFactory;
@@ -29,10 +31,12 @@ import com.zero.exchange.store.StoreService;
 import com.zero.exchange.match.model.MatchDetailRecord;
 import com.zero.exchange.match.model.MatchResult;
 import com.zero.exchange.order.OrderService;
-import com.zero.exchange.trade.TradeEnginService;
+import com.zero.exchange.util.IpUtil;
 import com.zero.exchange.util.JsonUtil;
 import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -70,7 +74,15 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
     @Autowired
     private MessagingFactory messagingFactory;
 
+    @Value("#{exchangeConfiguration.orderBookDepth}")
+    private Integer orderBookDepth = 100;
+
+    @Value("#{exchangeConfiguration.isDebugMode}")
+    private boolean isDebugMode = true;
+
     private MessageProducer<TickMessage> producer;
+
+    private MessageConsumer consumer;
 
     /**
      * 收集已完成的订单
@@ -94,15 +106,6 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
     private Queue<ApiResultMessage> apiResultQueue = new ConcurrentLinkedQueue<>();
 
     /**
-     * 系统是否发生错误
-     * */
-    private boolean isSystemError = false;
-    /**
-     * 上一条消息的定序id
-     * */
-    private long lastSequenceId;
-
-    /**
      * 数据库存储线程
      * */
     private Thread dbThread;
@@ -118,10 +121,38 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
      * 发送订单创建结果消息
      * */
     private Thread apiResultThread;
+    /**
+     * 更新orderBook
+     * */
+    private Thread orderBooKThread;
+
+    /**
+     * 系统是否发生错误
+     * */
+    private boolean isSystemError = false;
+    /**
+     * 上一条消息的定序id
+     * */
+    private long lastSequenceId;
+    /**
+     * orderBook是否有更新
+     * */
+    private boolean isOrderBookUpdate = false;
+    /**
+     * 最新的orderBook
+     * */
+    private OrderBookBean lastOrderBook = null;
+    /**
+     * OrderBook更新lua脚本SHA1值
+     * */
+    private String shaUpdateOrderBookLua = null;
 
     @PostConstruct
     public void init() {
+        shaUpdateOrderBookLua = redisService.loadScriptFromClassPath("/redis/update-orderBook.lua");
         producer = messagingFactory.createMessageProducer(MessageTopic.Topic.TICK, TickMessage.class);
+        consumer = messagingFactory.createBatchMessageListener(MessageTopic.Topic.TRADE,
+                IpUtil.getHostId(), this::receiveMessage);
         dbThread = new Thread(this::runOnDbThread, "async-db");
         dbThread.start();
         tickThread = new Thread(this::runOnTickThread, "async-tick");
@@ -130,12 +161,25 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
         notifyThread.start();
         apiResultThread = new Thread(this::runOnApiResultThread, "async-api");
         apiResultThread.start();
+        orderBooKThread = new Thread(this::runOnOrderBookThread, "async-orderBook");
+        orderBooKThread.start();
+    }
+
+    @PreDestroy
+    public void destroy() {
+        this.consumer.stop();
+        this.orderBooKThread.interrupt();
+        this.dbThread.interrupt();
     }
 
     @Override
     public void receiveMessage(List<AbstractEvent> receiveMessages) {
+        isOrderBookUpdate = false;
         for (AbstractEvent message : receiveMessages) {
             processEvent(message);
+        }
+        if (isOrderBookUpdate) {
+            lastOrderBook = this.matchService.getOrderBook(orderBookDepth);
         }
     }
 
@@ -178,7 +222,7 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
         // 更新 lastSequenceId
         this.lastSequenceId = abstractEvent.sequenceId;
         // debug模式下，验证消息内部状态的完整性
-        if (log.isDebugEnabled()) {
+        if (isDebugMode) {
             validate();
         }
     }
@@ -360,6 +404,34 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
                 redisService.publish(RedisCache.Topic.TRADE_API_RESULT, JsonUtil.writeJson(message));
             } else {
                 try {
+                    Thread.sleep(1);
+                } catch (InterruptedException e) {
+                    log.error("publish redis message [{}] is interrupt....", Thread.currentThread().getName());
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    /**
+     * 更新OrderBook
+     * */
+    private void runOnOrderBookThread() {
+        long lastSequenceId = 0;
+        for (;;) {
+            final OrderBookBean orderBook = this.lastOrderBook;
+            // 在orderBook更新后刷新orderBook
+            if (orderBook != null && orderBook.sequenceId > lastSequenceId) {
+                if (log.isDebugEnabled()) {
+                    log.debug("Update OrderBook at sequenceId[{}]", orderBook.sequenceId);
+                }
+                redisService.executeScriptReturnBoolean(shaUpdateOrderBookLua,
+                        new String[]{RedisCache.Key.ORDER_BOOK},
+                        new String[]{String.valueOf(orderBook.sequenceId), JsonUtil.writeJson(orderBook)});
+                lastSequenceId = orderBook.sequenceId;
+            } else {
+                try {
+                    // 暂停 1 ms
                     Thread.sleep(1);
                 } catch (InterruptedException e) {
                     log.error("publish redis message [{}] is interrupt....", Thread.currentThread().getName());

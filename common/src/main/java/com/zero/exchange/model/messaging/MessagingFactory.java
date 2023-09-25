@@ -73,12 +73,12 @@ public class MessagingFactory extends LoggerSupport {
         };
     }
 
-    public <T extends AbstractMessage> MessageConsumer createMessageConsumer(MessageTopic.Topic topic, String groupId, BatchHandlerMessage<T> batchHandlerMessage) {
-        return createMessageConsumer(topic, groupId, batchHandlerMessage, null);
+    public <T extends AbstractMessage> MessageConsumer createBatchMessageListener(MessageTopic.Topic topic, String groupId, BatchHandlerMessage<T> batchHandlerMessage) {
+        return createBatchMessageListener(topic, groupId, batchHandlerMessage, null);
     }
 
-    public <T extends AbstractMessage> MessageConsumer createMessageConsumer(MessageTopic.Topic topic, String groupId, BatchHandlerMessage<T> batchHandlerMessage,
-                                                                             CommonErrorHandler errorHandler) {
+    public <T extends AbstractMessage> MessageConsumer createBatchMessageListener(MessageTopic.Topic topic, String groupId, BatchHandlerMessage<T> batchHandlerMessage,
+                                                                                  CommonErrorHandler errorHandler) {
         log.info("init message consumer of topic[{}]...", topic);
         ConcurrentMessageListenerContainer<String, String> listenerContainer = listenerContainerFactory.createListenerContainer(new KafkaListenerEndpointAdapter() {
             @Override
