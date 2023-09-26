@@ -151,7 +151,7 @@ final class Mapper<T> {
         if (table != null) {
             return Arrays.stream(table.uniqueConstraints()).map(c -> {
                 String name = c.name().isEmpty() ? "UNI_" + String.join("_", c.columnNames()) : c.name();
-                return "CONSTRAINT " + name + " UNIQUE (" + String.join(", ", c.columnNames()) + ")\n";
+                return "CONSTRAINT " + name + " UNIQUE (" + String.join(", ", c.columnNames()) + "), \n";
             }).reduce("", (acc, s) -> {
                 return acc + s;
             });

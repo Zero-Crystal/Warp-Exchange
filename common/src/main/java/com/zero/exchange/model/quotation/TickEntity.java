@@ -6,7 +6,7 @@ import jakarta.persistence.*;
 import java.math.BigDecimal;
 
 @Entity
-@Table(name = "ticks", uniqueConstraints = @UniqueConstraint(name = "UNI_T_M", columnNames = {"takerOrder", "makerOrder"}),
+@Table(name = "ticks", uniqueConstraints = @UniqueConstraint(name = "UNI_T_M", columnNames = {"takerOrderId", "makerOrderId"}),
 indexes = @Index(name = "IDX_CT", columnList = "createAt"))
 public class TickEntity extends LoggerSupport {
 

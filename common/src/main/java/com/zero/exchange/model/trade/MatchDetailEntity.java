@@ -13,7 +13,7 @@ import java.math.BigDecimal;
  * */
 @Entity
 @Table(name = "match_details", uniqueConstraints = @UniqueConstraint(name = "UNI_OID_COID", columnNames = {"orderId",
-        "countOrderId"}), indexes = @Index(name = "IDX_OID_CT", columnList = "orderId, createAt"))
+        "counterOrderId"}), indexes = @Index(name = "IDX_OID_CT", columnList = "orderId, createdAt"))
 public class MatchDetailEntity implements EntitySupport, Comparable<MatchDetailEntity> {
 
     @Id
