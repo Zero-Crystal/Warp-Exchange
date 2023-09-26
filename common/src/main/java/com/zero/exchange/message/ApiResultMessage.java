@@ -1,7 +1,7 @@
 package com.zero.exchange.message;
 
-import com.zero.exchange.api.ApiError;
-import com.zero.exchange.api.ApiErrorResponse;
+import com.zero.exchange.api.redis.ApiError;
+import com.zero.exchange.api.redis.ApiErrorResponse;
 
 public class ApiResultMessage extends AbstractMessage {
 

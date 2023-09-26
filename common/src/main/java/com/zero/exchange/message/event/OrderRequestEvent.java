@@ -9,7 +9,7 @@ public class OrderRequestEvent extends AbstractEvent {
     /**
      * 用户id
      * */
-    public Long accountId;
+    public Long userId;
 
     /**
      * 交易方向
@@ -29,7 +29,7 @@ public class OrderRequestEvent extends AbstractEvent {
     @Override
     public String toString() {
         return "OrderRequestEvent [" + "refId: '" + refId + ", createAt: " + createAt + ", sequenceId: " + sequenceId +
-                ", previousId: " + previousId + ", uniqueId: " + uniqueId + ", accountId: " + accountId +
+                ", previousId: " + previousId + ", uniqueId: " + uniqueId + ", userId: " + userId +
                 ", direction: " + direction + ", price: " + price + ", quantity: " + quantity + ']';
     }
 }

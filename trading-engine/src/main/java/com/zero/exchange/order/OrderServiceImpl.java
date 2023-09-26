@@ -8,11 +8,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 @Service
-public class OrderServerImpl implements OrderService {
+public class OrderServiceImpl implements OrderService {
 
     private final AssetService assetService;
 
@@ -22,24 +25,24 @@ public class OrderServerImpl implements OrderService {
     private final ConcurrentMap<Long, OrderEntity> activeOrders = new ConcurrentHashMap<>();
 
     /**
-     * 跟踪用户活动的订单，accountId -> ConcurrentMap<OrderId, OrderEntity>
+     * 跟踪用户活动的订单，userId -> ConcurrentMap<OrderId, OrderEntity>
      * */
     private final ConcurrentMap<Long, ConcurrentMap<Long, OrderEntity>> userOrders = new ConcurrentHashMap<>();
 
-    public OrderServerImpl(@Autowired AssetService assetService) {
+    public OrderServiceImpl(@Autowired AssetService assetService) {
         this.assetService = assetService;
     }
 
     @Override
-    public OrderEntity createOrder(long createTime, Long orderId, long sequenceId, Long accountId, BigDecimal price, Direction direction, BigDecimal quantity) {
+    public OrderEntity createOrder(long createTime, Long orderId, long sequenceId, Long userId, BigDecimal price, Direction direction, BigDecimal quantity) {
         switch (direction) {
             case BUY -> {
-                if (!assetService.assetFreeze(accountId, AssetType.USD, price.multiply(quantity))) {
+                if (!assetService.assetFreeze(userId, AssetType.USD, price.multiply(quantity))) {
                     return null;
                 }
             }
             case SELL -> {
-                if (!assetService.assetFreeze(accountId, AssetType.BTC, price.multiply(quantity))) {
+                if (!assetService.assetFreeze(userId, AssetType.BTC, quantity)) {
                     return null;
                 }
             }
@@ -48,7 +51,7 @@ public class OrderServerImpl implements OrderService {
         OrderEntity orderEntity = new OrderEntity();
         orderEntity.id = orderId;
         orderEntity.sequenceId = sequenceId;
-        orderEntity.accountId = accountId;
+        orderEntity.userId = userId;
         orderEntity.price = price;
         orderEntity.direction = direction;
         orderEntity.quantity = orderEntity.unfilledQuantity = quantity;
@@ -56,29 +59,29 @@ public class OrderServerImpl implements OrderService {
         // 添加到活动的订单
         activeOrders.put(orderId, orderEntity);
         // 添加到用户所有活动的订单
-        ConcurrentMap<Long, OrderEntity> orderMap = userOrders.get(accountId);
+        ConcurrentMap<Long, OrderEntity> orderMap = userOrders.get(userId);
         if (orderMap == null) {
             orderMap = new ConcurrentHashMap<>();
-            userOrders.put(accountId, orderMap);
+            userOrders.put(userId, orderMap);
         }
         orderMap.put(orderId, orderEntity);
         return orderEntity;
     }
 
     @Override
-    public void removeOrder(Long accountId, Long orderId) {
+    public void removeOrder(Long userId, Long orderId) {
         // 1.移除活动订单
         OrderEntity orderRemoved = activeOrders.remove(orderId);
         if (orderRemoved == null) {
             throw new IllegalArgumentException("未找到当前订单, orderId=" + orderId);
         }
         // 2.移除用户活动的订单
-        ConcurrentMap<Long, OrderEntity> orderMap = userOrders.get(accountId);
+        ConcurrentMap<Long, OrderEntity> orderMap = userOrders.get(userId);
         if (orderMap == null) {
-            throw new IllegalArgumentException("未找到该用户[" + accountId + "]");
+            throw new IllegalArgumentException("未找到该用户[" + userId + "]");
         }
         if (orderMap.remove(orderId) == null) {
-            throw new IllegalArgumentException("未找到用户[" + accountId + "]的订单, orderId=" + orderId);
+            throw new IllegalArgumentException("未找到用户[" + userId + "]的订单, orderId=" + orderId);
         }
     }
 
@@ -93,7 +96,18 @@ public class OrderServerImpl implements OrderService {
     }
 
     @Override
-    public ConcurrentMap<Long, OrderEntity> getOrderMapByAccountId(Long accountId) {
-        return userOrders.get(accountId);
+    public ConcurrentMap<Long, OrderEntity> getOrderMapByUserId(Long userId) {
+        return userOrders.get(userId);
+    }
+
+    @Override
+    public void debug() {
+        System.out.println();
+        System.out.println("----------------------------order----------------------------");
+        List<OrderEntity> orderEntities = new ArrayList<>(activeOrders.values());
+        Collections.sort(orderEntities);
+        for (OrderEntity order : orderEntities) {
+            System.out.println(order.toString());
+        }
     }
 }

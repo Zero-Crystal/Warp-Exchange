@@ -16,19 +16,19 @@ public interface OrderService {
     /**
      * 创建订单
      * @param sequenceId 定序ID
-     * @param accountId 账户ID
+     * @param userId 用户Id
      * @param price 订单价格
      * @param direction 交易方向
      * @param quantity 订单数量
      * */
-    OrderEntity createOrder(long createTime, Long orderId, long sequenceId, Long accountId, BigDecimal price, Direction direction, BigDecimal quantity);
+    OrderEntity createOrder(long createTime, Long orderId, long sequenceId, Long userId, BigDecimal price, Direction direction, BigDecimal quantity);
 
     /**
      * 删除订单
-     * @param accountId 账户Id
+     * @param userId 用户Id
      * @param orderId 订单Id
      * */
-    void removeOrder(Long accountId, Long orderId);
+    void removeOrder(Long userId, Long orderId);
 
     /**
      * 查询活跃的订单
@@ -45,8 +45,10 @@ public interface OrderService {
 
     /**
      * 查询订单
-     * @param accountId
+     * @param userId
      * @return ConcurrentMap<Long, OrderEntity>
      * */
-    ConcurrentMap<Long, OrderEntity> getOrderMapByAccountId(Long accountId);
+    ConcurrentMap<Long, OrderEntity> getOrderMapByUserId(Long userId);
+
+    void debug();
 }

@@ -9,12 +9,12 @@ public class TransferEvent extends AbstractEvent {
     /**
      * 交易发起人id
      * */
-    public Long fromAccount;
+    public Long fromUserId;
 
     /**
      * 交易对象id
      * */
-    public Long toAccount;
+    public Long toUserId;
 
     /**
      * 交易货物类型
@@ -31,7 +31,7 @@ public class TransferEvent extends AbstractEvent {
     @Override
     public String toString() {
         return "TransferEvent [" + "refId: '" + refId + ", sequenceId: " + sequenceId + ", previousId: " + previousId +
-                ", uniqueId: " + uniqueId + ", fromAccount: " + fromAccount + ", toAccount: " + toAccount +
+                ", uniqueId: " + uniqueId + ", fromUserId: " + fromUserId + ", toUserId: " + toUserId +
                 ", assetType: " + assetType + ", amount: " + amount + ", sufficient: " + sufficient + ']';
     }
 }

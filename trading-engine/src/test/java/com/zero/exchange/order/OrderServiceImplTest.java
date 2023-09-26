@@ -12,11 +12,11 @@ import java.math.BigDecimal;
 import java.util.Date;
 
 
-class OrderServerImplTest {
+class OrderServiceImplTest {
 
     private AssetServiceImpl assetServiceImpl;
 
-    private OrderServerImpl orderService;
+    private OrderServiceImpl orderService;
 
     private final Long BASE_ACCOUNT = 0000L;
 
@@ -25,7 +25,7 @@ class OrderServerImplTest {
     @BeforeEach
     public void initTest() {
         assetServiceImpl = new AssetServiceImpl();
-        orderService = new OrderServerImpl(assetServiceImpl);
+        orderService = new OrderServiceImpl(assetServiceImpl);
 
         //init account A USD
         assetServiceImpl.baseTransfer(TransferType.AVAILABLE_TO_AVAILABLE, BASE_ACCOUNT, ACCOUNT_A,

@@ -67,7 +67,7 @@ public class OrderBook {
         List<String> orders = new ArrayList<>();
         for (Map.Entry<OrderKey, OrderEntity> bookEntry : this.book.entrySet()) {
             OrderEntity order = bookEntry.getValue();
-            orders.add(" " + order.price + " " + order.unfilledQuantity + " " + order.toString());
+            orders.add("    " + order.price + " - " + order.unfilledQuantity + ": " + order);
         }
         return String.join("\n", orders);
     }

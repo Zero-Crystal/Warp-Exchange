@@ -35,23 +35,23 @@ public class ClearingServiceImpl implements ClearingService {
                     if (takerOrder.price.compareTo(maker.price) > 0) {
                         // 当买入价格比卖出价格低时，退还差价
                         BigDecimal unfreezeQuote = takerOrder.price.subtract(maker.price).multiply(matchDetail.quantity());
-                        assetService.assetUnFreeze(takerOrder.sequenceId, AssetType.USD, unfreezeQuote);
+                        assetService.assetUnFreeze(takerOrder.userId, AssetType.USD, unfreezeQuote);
                     }
                     // 将买方USD转入卖方账户
                     assetService.baseTransfer(TransferType.FROZEN_TO_AVAILABLE,
-                            takerOrder.accountId, maker.accountId, AssetType.USD,
+                            takerOrder.userId, maker.userId, AssetType.USD,
                             maker.price.multiply(matched), false);
                     // 将卖方BTC转入买方账户
                     assetService.baseTransfer(TransferType.FROZEN_TO_AVAILABLE,
-                            maker.accountId, takerOrder.accountId, AssetType.BTC, matched, false);
+                            maker.userId, takerOrder.userId, AssetType.BTC, matched, false);
                     // 删除完全成交的maker
                     if (maker.unfilledQuantity.signum() == 0) {
-                        orderService.removeOrder(maker.accountId, maker.id);
+                        orderService.removeOrder(maker.userId, maker.id);
                     }
                 }
                 // 删除完全成交的taker
                 if (takerOrder.unfilledQuantity.signum() == 0) {
-                    orderService.removeOrder(takerOrder.accountId, takerOrder.id);
+                    orderService.removeOrder(takerOrder.userId, takerOrder.id);
                 }
             }
             case SELL -> {
@@ -59,19 +59,19 @@ public class ClearingServiceImpl implements ClearingService {
                     OrderEntity maker = matchDetail.makerOrder();
                     BigDecimal matched = matchDetail.quantity();
                     // 将卖方的BTC转入买方的账户
-                    assetService.baseTransfer(TransferType.FROZEN_TO_AVAILABLE, takerOrder.accountId, maker.accountId,
+                    assetService.baseTransfer(TransferType.FROZEN_TO_AVAILABLE, takerOrder.userId, maker.userId,
                             AssetType.BTC, matched, false);
                     // 将买方的USD转入卖方的账户
-                    assetService.baseTransfer(TransferType.FROZEN_TO_AVAILABLE, maker.accountId, takerOrder.accountId,
+                    assetService.baseTransfer(TransferType.FROZEN_TO_AVAILABLE, maker.userId, takerOrder.userId,
                             AssetType.USD, maker.price.multiply(matched), false);
                     // 删除完全成交的maker
                     if (maker.unfilledQuantity.signum() == 0) {
-                        orderService.removeOrder(maker.accountId, maker.id);
+                        orderService.removeOrder(maker.userId, maker.id);
                     }
                 }
                 // 删除完全成交的taker
                 if (takerOrder.unfilledQuantity.signum() == 0) {
-                    orderService.removeOrder(takerOrder.accountId, takerOrder.id);
+                    orderService.removeOrder(takerOrder.userId, takerOrder.id);
                 }
             }
             default -> throw new IllegalArgumentException("未知交易方向");
@@ -82,15 +82,15 @@ public class ClearingServiceImpl implements ClearingService {
     public void clearingCancel(OrderEntity order) {
         switch (order.direction) {
             case BUY -> {
-                assetService.assetUnFreeze(order.accountId, AssetType.USD, order.price.multiply(order.unfilledQuantity));
+                assetService.assetUnFreeze(order.userId, AssetType.USD, order.price.multiply(order.unfilledQuantity));
             }
             case SELL -> {
-                assetService.assetUnFreeze(order.accountId, AssetType.BTC, order.unfilledQuantity);
+                assetService.assetUnFreeze(order.userId, AssetType.BTC, order.unfilledQuantity);
             }
             default -> {
                 throw new IllegalArgumentException("未知交易方向");
             }
         }
-        orderService.removeOrder(order.accountId, order.id);
+        orderService.removeOrder(order.userId, order.id);
     }
 }

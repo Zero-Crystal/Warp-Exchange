@@ -7,6 +7,9 @@ import com.zero.exchange.asset.entity.TransferType;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -40,38 +43,38 @@ public class AssetServiceImpl extends LoggerSupport implements AssetService {
     }
 
     @Override
-    public void assetTransfer(Long fromAccountId, Long toAccountId, AssetType assetType, BigDecimal amount) {
-        if (!baseTransfer(TransferType.AVAILABLE_TO_AVAILABLE, fromAccountId, toAccountId, assetType, amount, true)) {
-            throw new RuntimeException("account " +  + fromAccountId + " transfer to account" + toAccountId
+    public void assetTransfer(Long fromuserId, Long touserId, AssetType assetType, BigDecimal amount) {
+        if (!baseTransfer(TransferType.AVAILABLE_TO_AVAILABLE, fromuserId, touserId, assetType, amount, true)) {
+            throw new RuntimeException("account " +  + fromuserId + " transfer to account" + touserId
                     + " failed, amount=" + amount + ", asset type=" + assetType);
         }
         if (log.isDebugEnabled()) {
             log.info("account=[{}] transfer to user=[{}], amount={}, asset type={}",
-                    fromAccountId, toAccountId, amount, assetType);
+                    fromuserId, touserId, amount, assetType);
         }
     }
 
     @Override
-    public boolean assetFreeze(Long accountId, AssetType assetType, BigDecimal amount) {
-        boolean isFreezeOk = baseTransfer(TransferType.AVAILABLE_TO_FROZEN, accountId, accountId, assetType, amount, true);
+    public boolean assetFreeze(Long userId, AssetType assetType, BigDecimal amount) {
+        boolean isFreezeOk = baseTransfer(TransferType.AVAILABLE_TO_FROZEN, userId, userId, assetType, amount, true);
         if (isFreezeOk && log.isDebugEnabled()) {
-            log.debug("account=[{}] frozen asset, amount={}, asset type={}", accountId, amount, assetType);
+            log.debug("account=[{}] frozen asset, amount={}, asset type={}", userId, amount, assetType);
         }
         return isFreezeOk;
     }
 
     @Override
-    public void assetUnFreeze(Long accountId, AssetType assetType, BigDecimal amount) {
-        if (!baseTransfer(TransferType.FROZEN_TO_AVAILABLE, accountId, accountId, assetType, amount, true)) {
-            throw new RuntimeException("account " + accountId + " unfrozen asset failed, amount=" + amount + ", asset type=" + assetType);
+    public void assetUnFreeze(Long userId, AssetType assetType, BigDecimal amount) {
+        if (!baseTransfer(TransferType.FROZEN_TO_AVAILABLE, userId, userId, assetType, amount, true)) {
+            throw new RuntimeException("account " + userId + " unfrozen asset failed, amount=" + amount + ", asset type=" + assetType);
         }
         if (log.isDebugEnabled()) {
-            log.debug("account=[{}] unfrozen asset, amount={}, asset type={}", accountId, amount, assetType);
+            log.debug("account=[{}] unfrozen asset, amount={}, asset type={}", userId, amount, assetType);
         }
     }
 
     @Override
-    public boolean baseTransfer(TransferType transferType, Long fromAccountId, Long toAccountId,
+    public boolean baseTransfer(TransferType transferType, Long fromuserId, Long touserId,
                                 AssetType assetType, BigDecimal amount, boolean checkBalance) {
         //检查转账金额
         if (amount.signum() == 0) {
@@ -80,13 +83,13 @@ public class AssetServiceImpl extends LoggerSupport implements AssetService {
         if (amount.signum() < 0) {
             throw new IllegalArgumentException("amount can not small than 0");
         }
-        Asset fromAsset = getAsset(fromAccountId, assetType);
+        Asset fromAsset = getAsset(fromuserId, assetType);
         if (fromAsset == null) {
-            fromAsset = initAsset(fromAccountId, assetType);
+            fromAsset = initAsset(fromuserId, assetType);
         }
-        Asset toAsset = getAsset(toAccountId, assetType);
+        Asset toAsset = getAsset(touserId, assetType);
         if (toAsset == null) {
-            toAsset = initAsset(toAccountId, assetType);
+            toAsset = initAsset(touserId, assetType);
         }
         return switch (transferType) {
             case AVAILABLE_TO_AVAILABLE -> {
@@ -128,16 +131,33 @@ public class AssetServiceImpl extends LoggerSupport implements AssetService {
         };
     }
 
+    @Override
+    public void debug() {
+        System.out.println();
+        System.out.println("----------------------------asset----------------------------");
+        List<Long> userIds = new ArrayList<>(userAssetsMap.keySet());
+        Collections.sort(userIds);
+        for (Long userId : userIds) {
+            System.out.println("----> userId: " + userId);
+            Map<AssetType, Asset> userAsset = userAssetsMap.get(userId);
+            List<AssetType> assetTypes = new ArrayList<>(userAsset.keySet());
+            Collections.sort(assetTypes);
+            for (AssetType type : assetTypes) {
+                System.out.println("    " + type + ": " + userAsset.get(type));
+            }
+        }
+    }
+
     /**
      * 初始化一个新账户
-     * @param accountId 账户id
+     * @param userId 账户id
      * @param assetType 资产类型
      * */
-    private Asset initAsset(Long accountId, AssetType assetType) {
-        ConcurrentMap<AssetType, Asset> assets = userAssetsMap.get(accountId);
+    private Asset initAsset(Long userId, AssetType assetType) {
+        ConcurrentMap<AssetType, Asset> assets = userAssetsMap.get(userId);
         if (assets == null) {
             assets = new ConcurrentHashMap<>();
-            userAssetsMap.put(accountId, assets);
+            userAssetsMap.put(userId, assets);
         }
         Asset zeroAsset = new Asset();
         assets.put(assetType, zeroAsset);

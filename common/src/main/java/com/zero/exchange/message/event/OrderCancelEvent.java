@@ -5,7 +5,7 @@ public class OrderCancelEvent extends AbstractEvent {
     /**
      * 用户id
      * */
-    public Long accountId;
+    public Long userId;
 
     /**
      * 订单id
@@ -15,7 +15,7 @@ public class OrderCancelEvent extends AbstractEvent {
     @Override
     public String toString() {
         return "OrderCancelEvent [" + "refId: '" + refId + ", createAt: " + createAt + ", sequenceId: " + sequenceId +
-                ", previousId: " + previousId + ", uniqueId: " + uniqueId + ", accountId: '" + accountId +
+                ", previousId: " + previousId + ", uniqueId: " + uniqueId + ", userId: '" + userId +
                 ", orderId: " + orderId + ']';
     }
 }

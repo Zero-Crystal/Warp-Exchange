@@ -47,4 +47,6 @@ public interface MatchService {
      * 获取市场价格
      * */
     BigDecimal getMarketPrice();
+
+    void debug();
 }

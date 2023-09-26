@@ -1,13 +1,14 @@
-package com.zero.exchange.match.service;
+package com.zero.exchange.match;
 
 import com.zero.exchange.enums.AssetType;
 import com.zero.exchange.enums.Direction;
+import com.zero.exchange.match.service.MatchServiceImpl;
 import com.zero.exchange.model.trade.OrderEntity;
 import com.zero.exchange.asset.entity.TransferType;
 import com.zero.exchange.asset.service.AssetServiceImpl;
 import com.zero.exchange.match.model.MatchResult;
 import com.zero.exchange.match.model.OrderBook;
-import com.zero.exchange.order.OrderServerImpl;
+import com.zero.exchange.order.OrderServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -19,7 +20,7 @@ class MatchServiceTest {
 
     private AssetServiceImpl assetServiceImpl;
 
-    private OrderServerImpl orderService;
+    private OrderServiceImpl orderService;
 
     private OrderBook SELL_BOOK;
 
@@ -35,7 +36,7 @@ class MatchServiceTest {
     void setUp() {
         matchService = new MatchServiceImpl();
         assetServiceImpl = new AssetServiceImpl();
-        orderService = new OrderServerImpl(assetServiceImpl);
+        orderService = new OrderServiceImpl(assetServiceImpl);
 
         //init account A USD
         assetServiceImpl.baseTransfer(TransferType.AVAILABLE_TO_AVAILABLE, BASE_ACCOUNT, ACCOUNT_A,
@@ -64,10 +65,10 @@ class MatchServiceTest {
         System.out.println("================================================================");
     }
 
-    private OrderEntity createOrderEntity(Long accountId, BigDecimal price, BigDecimal quality, Direction direction) {
+    private OrderEntity createOrderEntity(Long userId, BigDecimal price, BigDecimal quality, Direction direction) {
         long sequenceId = System.currentTimeMillis();
         Long orderId = sequenceId + today();
-        return orderService.createOrder(System.currentTimeMillis(), orderId, sequenceId, accountId,
+        return orderService.createOrder(System.currentTimeMillis(), orderId, sequenceId, userId,
                 price, direction,  quality);
     }
 

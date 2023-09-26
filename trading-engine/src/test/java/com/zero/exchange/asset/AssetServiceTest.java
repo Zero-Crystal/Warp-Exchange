@@ -42,15 +42,15 @@ public class AssetServiceTest {
     @AfterEach
     public void userAssets() {
         ConcurrentMap<Long, ConcurrentMap<AssetType, Asset>> userAssets = assetServiceImpl1.getUserAssets();
-        for (Long accountId : userAssets.keySet()) {
-            Map<AssetType, Asset> userAsset = assetServiceImpl1.getAssets(accountId);
+        for (Long userId : userAssets.keySet()) {
+            Map<AssetType, Asset> userAsset = assetServiceImpl1.getAssets(userId);
             if (userAsset.containsKey(AssetType.USD)) {
                 Asset asset = userAsset.get(AssetType.USD);
-                System.out.println("account:" + accountId + " - " + " USD - " + asset.toString());
+                System.out.println("account:" + userId + " - " + " USD - " + asset.toString());
             }
             if (userAsset.containsKey(AssetType.BTC)) {
                 Asset asset = userAsset.get(AssetType.BTC);
-                System.out.println("account:" + accountId + " - " + " BTC - " + asset.toString());
+                System.out.println("account:" + userId + " - " + " BTC - " + asset.toString());
             }
         }
         System.out.println("=========================测试结束=========================");

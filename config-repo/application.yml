@@ -4,6 +4,11 @@ server:
     use-forward-headers: ${TOMCAT_USE_FORWARD_HEADERS:true}
     protocol-header: ${TOMCAT_PROTOCOL_HEADER:x-forwarded-proto}
 
+exchange:
+  config:
+    order-book-depth: ${ORDER_BOOK_DEPTH:100}
+    is-debug-mode: ${IS_DEBUG_MODE:FALSE}
+
 logging:
   level:
     root: ${LOGGING_ROOT_LEVEL:INFO}

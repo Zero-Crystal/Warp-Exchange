@@ -1,4 +1,4 @@
-package com.zero.exchange.trade;
+package com.zero.exchange.trade.service;
 
 import com.zero.exchange.message.event.AbstractEvent;
 import com.zero.exchange.message.event.OrderCancelEvent;
@@ -33,4 +33,11 @@ public interface TradeEnginService {
      * 订单交易
      * */
     boolean transfer(TransferEvent event);
+
+    /**
+     * 验证消息内部状态
+     * */
+    void validate();
+
+    void debug();
 }

@@ -26,7 +26,7 @@ public class MatchServiceImpl implements MatchService {
         return switch (order.direction) {
             case BUY -> processOrder(sequenceId, order, this.SELL_ORDER_BOOK, this.BUY_ORDER_BOOK);
             case SELL -> processOrder(sequenceId, order, this.BUY_ORDER_BOOK, this.SELL_ORDER_BOOK);
-            default -> throw new IllegalArgumentException("未知交易方向，account=" + order.accountId
+            default -> throw new IllegalArgumentException("未知交易方向，account=" + order.userId
                     + ", direction=" + order.direction);
         };
     }
@@ -59,6 +59,15 @@ public class MatchServiceImpl implements MatchService {
     @Override
     public BigDecimal getMarketPrice() {
         return marketPrice;
+    }
+
+    @Override
+    public void debug() {
+        System.out.println();
+        System.out.println("----------------------------match----------------------------");
+        System.out.println("market price: " + marketPrice);
+        System.out.println("orderBook BUY: \n" + BUY_ORDER_BOOK);
+        System.out.println("orderBook SELL: \n" + SELL_ORDER_BOOK);
     }
 
     /**
@@ -110,6 +119,7 @@ public class MatchServiceImpl implements MatchService {
 
             // 完全成交后退出循环
             if (takerUnfilledQuantity.signum() == 0) {
+                takerOrder.updateOrder(takerUnfilledQuantity, OrderStatus.FULLY_FILLED, ts);
                 break;
             }
         }

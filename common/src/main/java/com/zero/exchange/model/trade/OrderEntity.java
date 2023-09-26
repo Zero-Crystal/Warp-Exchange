@@ -31,7 +31,7 @@ public class OrderEntity implements EntitySupport, Comparable<OrderEntity> {
      * 用户id
      * */
     @Column(nullable = false, updatable = false)
-    public Long accountId;
+    public Long userId;
 
     /**
      * 价格
@@ -102,7 +102,7 @@ public class OrderEntity implements EntitySupport, Comparable<OrderEntity> {
         int version = this.version;
         entity.id = this.id;
         entity.sequenceId = this.sequenceId;
-        entity.accountId = this.accountId;
+        entity.userId = this.userId;
         entity.price = this.price;
         entity.direction = this.direction;
         entity.status = this.status;
@@ -135,17 +135,14 @@ public class OrderEntity implements EntitySupport, Comparable<OrderEntity> {
 
     @Override
     public String toString() {
-        return "OrderEntity [" +
-                "id=" + id +
-                ", sequenceId=" + sequenceId +
-                ", accountId=" + accountId +
-                ", price=" + price +
-                ", direction=" + direction +
-                ", status=" + status +
-                ", quantity=" + quantity +
-                ", unfilledQuantity=" + unfilledQuantity +
-                ", createdAt=" + createdAt +
-                ", updateAt=" + updateAt +
-                ']';
+        return id + " [sequenceId: " + sequenceId +
+                ", userId: " + userId +
+                ", price: " + price +
+                ", direction: " + direction +
+                ", status: " + status +
+                ", quantity: " + quantity +
+                ", unfilledQuantity: " + unfilledQuantity +
+                ", createdAt: " + createdAt +
+                ", updateAt: " + updateAt + "]";
     }
 }

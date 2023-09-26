@@ -1,4 +1,4 @@
-package com.zero.exchange.api;
+package com.zero.exchange.api.redis;
 
 public class ApiException extends RuntimeException {
     private ApiErrorResponse error;

@@ -30,9 +30,6 @@ public class Asset {
 
     @Override
     public String toString() {
-        return "Asset: {" +
-                "available=" + available +
-                ", frozen=" + frozen +
-                '}';
+        return "[available: " + available + ", frozen: " + frozen + "]";
     }
 }

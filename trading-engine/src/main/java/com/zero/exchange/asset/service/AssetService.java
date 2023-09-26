@@ -36,41 +36,43 @@ public interface AssetService {
     /**
      * 转账
      *
-     * @param fromAccountId 转账方
-     * @param toAccountId 收款方
+     * @param fromuserId 转账方
+     * @param touserId 收款方
      * @param assetType 转账资产类型
      * @param amount 转账金额
      * */
-    void assetTransfer(Long fromAccountId, Long toAccountId, AssetType assetType, BigDecimal amount);
+    void assetTransfer(Long fromuserId, Long touserId, AssetType assetType, BigDecimal amount);
 
     /**
      * 冻结资产
      *
-     * @param accountId 冻结用户
+     * @param userId 冻结用户
      * @param assetType 冻结资产类型
      * @param amount 冻结金额
      * */
-    boolean assetFreeze(Long accountId, AssetType assetType, BigDecimal amount);
+    boolean assetFreeze(Long userId, AssetType assetType, BigDecimal amount);
 
     /**
      * 解冻资产
      *
-     * @param accountId 解冻用户
+     * @param userId 解冻用户
      * @param assetType 解冻资产类型
      * @param amount 解冻金额
      * */
-    void assetUnFreeze(Long accountId, AssetType assetType, BigDecimal amount);
+    void assetUnFreeze(Long userId, AssetType assetType, BigDecimal amount);
 
     /**
      * 转账操作
      *
      * @param transferType 转账类型
-     * @param fromAccountId 转账方
-     * @param toAccountId 收款方
+     * @param fromuserId 转账方
+     * @param touserId 收款方
      * @param assetType 资产类型
      * @param amount 转账金额
      * @param checkBalance 是否需要检查余额
      * */
-    boolean baseTransfer(TransferType transferType, Long fromAccountId, Long toAccountId,
+    boolean baseTransfer(TransferType transferType, Long fromuserId, Long touserId,
                          AssetType assetType, BigDecimal amount, boolean checkBalance);
+
+    void debug();
 }

@@ -90,6 +90,12 @@ public class DbTemplate {
         return list.get(0);
     }
 
+    public String exportDDL() {
+        return String.join("\n\n", this.classMapping.values().stream().map((mapper) -> {
+            return mapper.ddl();
+        }).sorted().toArray(String[]::new));
+    }
+
     /**
      * remove bean by id
      *

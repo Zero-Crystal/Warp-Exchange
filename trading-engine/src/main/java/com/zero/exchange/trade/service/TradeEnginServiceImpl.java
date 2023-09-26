@@ -1,7 +1,7 @@
-package com.zero.exchange.trade;
+package com.zero.exchange.trade.service;
 
 import com.zero.exchange.bean.OrderBookBean;
-import com.zero.exchange.enums.AccountType;
+import com.zero.exchange.enums.UserType;
 import com.zero.exchange.enums.AssetType;
 import com.zero.exchange.enums.Direction;
 import com.zero.exchange.enums.MatchType;
@@ -51,101 +51,101 @@ import java.util.concurrent.ConcurrentMap;
 public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginService {
 
     @Autowired(required = false)
-    private ZoneId zoneId = ZoneId.systemDefault();
+    ZoneId zoneId = ZoneId.systemDefault();
 
     @Autowired
-    private AssetService assetService;
+    AssetService assetService;
 
     @Autowired
-    private OrderService orderService;
+    OrderService orderService;
 
     @Autowired
-    private MatchService matchService;
+    MatchService matchService;
 
     @Autowired
-    private ClearingService clearingService;
+    ClearingService clearingService;
 
     @Autowired
-    private StoreService storeService;
+    StoreService storeService;
 
     @Autowired
-    private RedisService redisService;
+    RedisService redisService;
 
     @Autowired
-    private MessagingFactory messagingFactory;
+    MessagingFactory messagingFactory;
 
-    @Value("#{exchangeConfiguration.orderBookDepth}")
-    private Integer orderBookDepth = 100;
+    @Value("${exchange.config.order-book-depth}")
+    Integer orderBookDepth = 100;
 
-    @Value("#{exchangeConfiguration.isDebugMode}")
-    private boolean isDebugMode = true;
+    @Value("${exchange.config.is-debug-mode}")
+    boolean isDebugMode = false;
 
-    private MessageProducer<TickMessage> producer;
+    MessageProducer<TickMessage> producer;
 
-    private MessageConsumer consumer;
+    MessageConsumer consumer;
 
     /**
      * 收集已完成的订单
      * */
-    private Queue<List<OrderEntity>> orderQueue = new ConcurrentLinkedQueue<>();
+    Queue<List<OrderEntity>> orderQueue = new ConcurrentLinkedQueue<>();
     /**
      * 收集已完成撮合的撮合结果
      * */
-    private Queue<List<MatchDetailEntity>> matchQueue = new ConcurrentLinkedQueue<>();
+    Queue<List<MatchDetailEntity>> matchQueue = new ConcurrentLinkedQueue<>();
     /**
      * ...
      * */
-    private Queue<TickMessage> tickQueue = new ConcurrentLinkedQueue<>();
+    Queue<TickMessage> tickQueue = new ConcurrentLinkedQueue<>();
     /**
      * 收集订单消息
      * */
-    private Queue<NotificationMessage> notificationQueue = new ConcurrentLinkedQueue<>();
+    Queue<NotificationMessage> notificationQueue = new ConcurrentLinkedQueue<>();
     /**
      * 收集订单创建结果
      * */
-    private Queue<ApiResultMessage> apiResultQueue = new ConcurrentLinkedQueue<>();
+    Queue<ApiResultMessage> apiResultQueue = new ConcurrentLinkedQueue<>();
 
     /**
      * 数据库存储线程
      * */
-    private Thread dbThread;
+    Thread dbThread;
     /**
      * ...
      * */
-    private Thread tickThread;
+    Thread tickThread;
     /**
      * 发送订单消息通知
      * */
-    private Thread notifyThread;
+    Thread notifyThread;
     /**
      * 发送订单创建结果消息
      * */
-    private Thread apiResultThread;
+    Thread apiResultThread;
     /**
      * 更新orderBook
      * */
-    private Thread orderBooKThread;
+    Thread orderBooKThread;
 
     /**
      * 系统是否发生错误
      * */
-    private boolean isSystemError = false;
+    boolean isSystemError = false;
     /**
      * 上一条消息的定序id
      * */
-    private long lastSequenceId;
+    long lastSequenceId;
     /**
      * orderBook是否有更新
      * */
-    private boolean isOrderBookUpdate = false;
+    boolean isOrderBookUpdate = false;
     /**
      * 最新的orderBook
      * */
-    private OrderBookBean lastOrderBook = null;
+    OrderBookBean lastOrderBook = null;
     /**
      * OrderBook更新lua脚本SHA1值
      * */
-    private String shaUpdateOrderBookLua = null;
+    String shaUpdateOrderBookLua = null;
 
     @PostConstruct
     public void init() {
@@ -184,17 +184,17 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
     }
 
     @Override
-    public void processEvent(AbstractEvent abstractEvent) {
+    public void processEvent(AbstractEvent event) {
         if (isSystemError) {
             return;
         }
         // 1.判断是否是重复消息
-        if (abstractEvent.sequenceId <= this.lastSequenceId) {
-            log.warn("消息重复, sequenceId={}", abstractEvent.sequenceId);
+        if (event.sequenceId <= this.lastSequenceId) {
+            log.warn("消息重复, sequenceId={}", event.sequenceId);
             return;
         }
         // 2.判断是否丢失了消息
-        if (abstractEvent.previousId > this.lastSequenceId) {
+        if (event.previousId > this.lastSequenceId) {
             List<AbstractEvent> lostEvents = storeService.loadEventsFromDB(lastSequenceId);
             if (lostEvents.isEmpty()) {
                 // 读取失败
@@ -202,25 +202,25 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
                 return;
             }
             // 重新分发消息
-            for (AbstractEvent event : lostEvents) {
-                processEvent(event);
+            for (AbstractEvent e : lostEvents) {
+                processEvent(e);
                 return;
             }
         }
         // 3.判断当前消息是否指向上一条消息
-        if (abstractEvent.previousId != this.lastSequenceId) {
+        if (event.previousId != this.lastSequenceId) {
             System.exit(1);
         }
         // 4.处理事件
-        if (abstractEvent instanceof OrderRequestEvent) {
-            createOrder((OrderRequestEvent) abstractEvent);
-        } else if (abstractEvent instanceof OrderCancelEvent) {
-            cancelOrder((OrderCancelEvent) abstractEvent);
-        } else if (abstractEvent instanceof TransferEvent) {
-            transfer((TransferEvent) abstractEvent);
+        if (event instanceof OrderRequestEvent) {
+            createOrder((OrderRequestEvent) event);
+        } else if (event instanceof OrderCancelEvent) {
+            cancelOrder((OrderCancelEvent) event);
+        } else if (event instanceof TransferEvent) {
+            transfer((TransferEvent) event);
         }
         // 更新 lastSequenceId
-        this.lastSequenceId = abstractEvent.sequenceId;
+        this.lastSequenceId = event.sequenceId;
         // debug模式下，验证消息内部状态的完整性
         if (isDebugMode) {
             validate();
@@ -234,7 +234,7 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
         Integer year = zonedDateTime.getYear();
         Integer month = zonedDateTime.getMonth().getValue();
         Long orderId = event.sequenceId * 10000 + (year * 100 + month);
-        OrderEntity order = orderService.createOrder(event.createAt, orderId, event.sequenceId, event.accountId, event.price,
+        OrderEntity order = orderService.createOrder(event.createAt, orderId, event.sequenceId, event.userId, event.price,
                 event.direction, event.quantity);
         if (order == null) {
             log.error("订单[{}]创建失败：{}", orderId, event);
@@ -249,7 +249,7 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
         apiResultQueue.add(ApiResultMessage.orderSuccess(event.refId, event.createAt, order.copy()));
         // 收集Notification
         List<NotificationMessage> notifyList = new ArrayList<>();
-        notifyList.add(createNotificationMessage(event.createAt, "order_matched", order.accountId, order.copy()));
+        notifyList.add(createNotificationMessage(event.createAt, "order_matched", order.userId, order.copy()));
         // 清算结束，收集已完成的订单
         if (!matchResult.matchDetails.isEmpty()) {
             List<OrderEntity> closeOrders = new ArrayList<>();
@@ -260,7 +260,7 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
             }
             for (MatchDetailRecord detailRecord : matchResult.matchDetails) {
                 OrderEntity maker = detailRecord.makerOrder();
-                notifyList.add(createNotificationMessage(event.createAt, "order_matched", maker.accountId, maker.copy()));
+                notifyList.add(createNotificationMessage(event.createAt, "order_matched", maker.userId, maker.copy()));
                 if (maker.status.isFinalStatus()) {
                     closeOrders.add(maker);
                 }
@@ -298,7 +298,7 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
     public void cancelOrder(OrderCancelEvent event) {
         OrderEntity order = orderService.getOrderByOrderId(event.orderId);
         // 未找到该订单或该订单不属于该用户
-        if (order == null || order.accountId.longValue() != event.accountId.longValue()) {
+        if (order == null || order.userId.longValue() != event.userId.longValue()) {
             log.error("订单取消失败: {}", event);
             // 发送失败消息
             apiResultQueue.add(ApiResultMessage.cancelOrderFailed(event.refId, event.createAt));
@@ -307,15 +307,36 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
         matchService.cancel(event.createAt, order);
         clearingService.clearingCancel(order);
         // 发送成功消息
-        notificationQueue.add(createNotificationMessage(event.createAt, "order_cancel", order.accountId, order));
+        notificationQueue.add(createNotificationMessage(event.createAt, "order_cancel", order.userId, order));
         apiResultQueue.add(ApiResultMessage.cancelOrderFailed(event.refId, event.createAt));
     }
 
     @Override
     public boolean transfer(TransferEvent event) {
-        boolean isSuccess = assetService.baseTransfer(TransferType.AVAILABLE_TO_AVAILABLE, event.fromAccount, event.toAccount,
-                event.assetType, event.amount, true);
+        boolean isSuccess = assetService.baseTransfer(TransferType.AVAILABLE_TO_AVAILABLE, event.fromUserId, event.toUserId,
+                event.assetType, event.amount, event.sufficient);
         return isSuccess;
+    }
+
+    @Override
+    public void validate() {
+        log.info("--------------------start validate trade system--------------------");
+        long startTime = System.currentTimeMillis();
+        validateAsset();
+        validateOrder();
+        validateMatch();
+        long costTime = System.currentTimeMillis() - startTime;
+        log.info("--------------------------- validate ok ---------------------------");
+    }
+
+    @Override
+    public void debug() {
+        System.out.println();
+        System.out.println("=========================================== trade engin debug ===========================================");
+        assetService.debug();
+        orderService.debug();
+        matchService.debug();
+        System.out.println("================================================== end ==================================================");
     }
 
     /**
@@ -502,8 +523,8 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
         mde.sequenceId = sequenceId;
         mde.orderId = forTaker ? detail.takerOrder().id : detail.makerOrder().id;
         mde.counterOrderId = forTaker ? detail.makerOrder().id : detail.takerOrder().id;
-        mde.account = forTaker ? detail.takerOrder().accountId : detail.makerOrder().accountId;
-        mde.counterAccount = forTaker ? detail.makerOrder().accountId : detail.takerOrder().accountId;
+        mde.account = forTaker ? detail.takerOrder().userId : detail.makerOrder().userId;
+        mde.counterAccount = forTaker ? detail.makerOrder().userId : detail.takerOrder().userId;
         mde.type = forTaker ? MatchType.TAKER : MatchType.MACKER;
         mde.direction = forTaker ? detail.takerOrder().direction : detail.makerOrder().direction;
         mde.price = detail.price();
@@ -531,19 +552,6 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
     }
 
     /**
-     * 验证消息内部状态
-     * */
-    private void validate() {
-        log.info("--------------------start validate trade system--------------------");
-        long startTime = System.currentTimeMillis();
-        validateAsset();
-        validateOrder();
-        validateMatch();
-        long costTime = System.currentTimeMillis() - startTime;
-        log.info("----------------------validate end cost {} ms----------------------", costTime);
-    }
-
-    /**
      * 验证资产系统总额为0，且除负债账户外其余账户资产不为负；
      * */
     private void validateAsset() {
@@ -556,12 +564,12 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
             for (Map.Entry<AssetType, Asset> assetEntry : assetMap.entrySet()) {
                 AssetType assetType = assetEntry.getKey();
                 Asset asset = assetEntry.getValue();
-                if (userAccount == AccountType.DEBT.getAccountType()) {
+                if (userAccount == UserType.DEBT.getUserType()) {
                     // 系统负债账户available不允许为正:
                     require(asset.getAvailable().signum() <= 0, "负债用户[" + userAccount + "]的可用金额大于0");
                     // 系统负债账户frozen必须为0:
                     require(asset.getFrozen().signum() == 0, "负债用户[" + userAccount + "]的冻结不为0");
-                } else if (userAccount == AccountType.TRADER.getAccountType()) {
+                } else if (userAccount == UserType.TRADER.getUserType()) {
                     require(asset.getAvailable().signum() >= 0, "交易用户[" + userAccount + "]的可用金额为负数");
                     require(asset.getFrozen().signum() >= 0, "交易用户[" + userAccount + "]的冻结金额为负数");
                 }
@@ -583,16 +591,15 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
         // 获取订单系统中所有累计为成交的冻结资产
         Map<Long, Map<AssetType, BigDecimal>> userOrderFrozen = new HashMap<>();
         for (Map.Entry<Long, OrderEntity> entry : orderService.getActiveOrders().entrySet()) {
-            Long userAccount = entry.getKey();
             OrderEntity order = entry.getValue();
-            require(order.unfilledQuantity.signum() > 0, "交易用户[" + userAccount + "]的订单[" + order.id + "]未成交数量<=0");
+            require(order.unfilledQuantity.signum() > 0, "交易用户[" + order.userId + "]的订单[" + order.id + "]未成交数量<=0");
             switch (order.direction) {
                 case BUY -> {
                     // 订单必须在撮合引擎中
                     require(matchService.getOrderBook(Direction.BUY).exist(order), "订单簿中不包含该订单[" + order.id + "]");
                     // 累计未成交冻结的USD
-                    userOrderFrozen.putIfAbsent(userAccount, new HashMap<>());
-                    Map<AssetType, BigDecimal> userFrozenAsset = userOrderFrozen.get(userAccount);
+                    userOrderFrozen.putIfAbsent(order.userId, new HashMap<>());
+                    Map<AssetType, BigDecimal> userFrozenAsset = userOrderFrozen.get(order.userId);
                     userFrozenAsset.putIfAbsent(AssetType.USD, BigDecimal.ZERO);
                     BigDecimal frozenUSD = userFrozenAsset.get(AssetType.USD);
                     userFrozenAsset.put(AssetType.USD, frozenUSD.add(order.price.multiply(order.unfilledQuantity)));
@@ -602,34 +609,36 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
                     // 该售卖订单必须在撮合引擎中
                     require(matchService.getOrderBook(Direction.SELL).exist(order), "售卖订单簿中不包含该订单[" + order.id + "]");
                     // 累计未成交的BTC
-                    userOrderFrozen.putIfAbsent(userAccount, new HashMap<>());
-                    Map<AssetType, BigDecimal> userFrozenAsset = userOrderFrozen.get(userAccount);
+                    userOrderFrozen.putIfAbsent(order.userId, new HashMap<>());
+                    Map<AssetType, BigDecimal> userFrozenAsset = userOrderFrozen.get(order.userId);
                     userFrozenAsset.putIfAbsent(AssetType.BTC, BigDecimal.ZERO);
                     BigDecimal frozenBTC = userFrozenAsset.get(AssetType.BTC);
-                    userFrozenAsset.put(AssetType.BTC, frozenBTC.add(order.price.multiply(order.unfilledQuantity)));
+                    userFrozenAsset.put(AssetType.BTC, frozenBTC.add(order.unfilledQuantity));
                     break;
                 }
                 default -> {
                     require(false,
-                            "用户[account: " + userAccount + ", direction: " + order.direction + "]的交易方向异常！");
+                            "用户[account: " + order.userId + ", direction: " + order.direction + "]的交易方向异常！");
                     break;
                 }
             }
         }
         // 验证订单系统中已冻结的未成交资产和资产系统中的一致
         for (Map.Entry<Long, ConcurrentMap<AssetType, Asset>> entry : assetService.getUserAssets().entrySet()) {
-            Long userAccount = entry.getKey();
+            Long userId = entry.getKey();
             ConcurrentMap<AssetType, Asset> userAsset = entry.getValue();
             for (Map.Entry<AssetType, Asset> entry1 : userAsset.entrySet()) {
                 AssetType assetType = entry1.getKey();
                 Asset asset = entry1.getValue();
-                Map<AssetType, BigDecimal> orderFrozen = userOrderFrozen.get(userAccount);
-                require(orderFrozen !=  null, "用户[" + userAccount + "]未成交的冻结资产在订单系统中不存在");
-                BigDecimal frozen = orderFrozen.get(assetType);
-                require(frozen != null, "用户[" + userAccount + "]类型为[" + assetType + "]的冻结资产不存在");
-                require(frozen.compareTo(asset.getFrozen()) == 0,
-                        "用户[account: " + userAccount + ", assetType: " + assetType + "]在订单系统中已冻结的未成交资产和资产系统中的不一致");
-                orderFrozen.remove(assetType);
+                if (asset.getFrozen().signum() > 0) {
+                    Map<AssetType, BigDecimal> orderFrozen = userOrderFrozen.get(userId);
+                    require(orderFrozen !=  null, "用户[" + userId + "]未成交的冻结资产在订单系统中不存在");
+                    BigDecimal frozen = orderFrozen.get(assetType);
+                    require(frozen != null, "用户[" + userId + "]类型为[" + assetType + "]的冻结资产不存在");
+                    require(frozen.compareTo(asset.getFrozen()) == 0,
+                            "用户[account: " + userId + ", assetType: " + assetType + "]在订单系统中已冻结的未成交资产和资产系统中的不一致");
+                    orderFrozen.remove(assetType);
+                }
             }
         }
         // 验证userOrderFrozen中不存在未验证的数据
