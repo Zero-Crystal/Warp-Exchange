@@ -23,7 +23,7 @@ public class EventEntity implements EntitySupport {
      * 消息定序 id
      * */
     @Column(nullable = false, updatable = false)
-    public Long sequencerId;
+    public Long sequenceId;
 
     /**
      * 消息创建时间
@@ -45,7 +45,7 @@ public class EventEntity implements EntitySupport {
 
     @Override
     public String toString() {
-        return "EventEntity [" + "id: " + id + ", sequencerId: " + sequencerId + ", createAt: " + createAt +
+        return "EventEntity [" + "id: " + id + ", sequencerId: " + sequenceId + ", createAt: " + createAt +
                 ", data: " + data + ", previousId: " + previousId + ']';
     }
 }

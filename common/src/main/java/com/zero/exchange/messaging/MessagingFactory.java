@@ -1,4 +1,4 @@
-package com.zero.exchange.model.messaging;
+package com.zero.exchange.messaging;
 
 import com.zero.exchange.message.AbstractMessage;
 import com.zero.exchange.support.LoggerSupport;
@@ -93,6 +93,7 @@ public class MessagingFactory extends LoggerSupport {
         });
         listenerContainer.setupMessageListener(new BatchMessageListener<String, String>() {
             @Override
+            @SuppressWarnings("unchecked")
             public void onMessage(List<ConsumerRecord<String, String>> consumerRecords) {
                 List<T> messages = new ArrayList<>(consumerRecords.size());
                 for (ConsumerRecord<String, String> consumerRecord : consumerRecords) {

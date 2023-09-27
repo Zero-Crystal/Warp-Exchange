@@ -5,18 +5,18 @@ import org.springframework.lang.Nullable;
 
 public class AbstractEvent extends AbstractMessage {
     /**
-     * Message after sequence id
+     * 定序后的定序
      * */
     public long sequenceId;
 
     /**
-     * Previous message sequence id
+     * 上一条消息的定序id
      * */
     public long previousId;
 
     /**
-     * Unique id
+     * 可选的全局唯一标识
      * */
     @Nullable
-    public long uniqueId;
+    public String uniqueId;
 }

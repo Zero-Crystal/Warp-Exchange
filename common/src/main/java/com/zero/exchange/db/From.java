@@ -27,10 +27,10 @@ public final class From<T> extends CriteriaQuery<T> {
     /**
      * Add order by of query
      *
-     * @param field
+     * @param orderBy
      * */
-    public OrderBy<T> orderBy(String field) {
-        return new OrderBy<>(this.criteria, field);
+    public OrderBy<T> orderBy(String orderBy) {
+        return new OrderBy<>(this.criteria, orderBy);
     }
 
     /**

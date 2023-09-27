@@ -33,21 +33,23 @@ final class Criteria<T> {
             builder.append("WHERE ").append(String.join(" ", where));
         }
         if (orderBy != null) {
-            builder.append("ORDER BY ").append(String.join(", ", orderBy));
+            builder.append(" ORDER BY ").append(String.join(", ", orderBy));
         }
         if (offset >= 0 && maxResults > 0) {
-            builder.append("LIMIT ?, ?");
+            builder.append(" LIMIT ?, ?");
         }
         return builder.toString();
     }
 
     Object[] params() {
         List<Object> params = new ArrayList<>();
-        for (Object obj : whereParams) {
-            if (obj == null) {
-                params.add(null);
-            } else {
-                params.add(obj);
+        if (where != null) {
+            for (Object obj : whereParams) {
+                if (obj == null) {
+                    params.add(null);
+                } else {
+                    params.add(obj);
+                }
             }
         }
         if (offset >= 0 && maxResults > 0) {

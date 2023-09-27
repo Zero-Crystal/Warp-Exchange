@@ -11,7 +11,7 @@ CREATE TABLE events (
     createAt BIGINT NOT NULL,
     data VARCHAR(10000) NOT NULL,
     previousId BIGINT NOT NULL,
-    sequencerId BIGINT NOT NULL,
+    sequenceId BIGINT NOT NULL,
     CONSTRAINT UNI_PREV_ID UNIQUE (previousId),
     PRIMARY KEY(id)
 ) CHARACTER SET utf8 COLLATE utf8_general_ci AUTO_INCREMENT = 1000;
@@ -62,4 +62,11 @@ CREATE TABLE ticks (
     CONSTRAINT UNI_T_M UNIQUE (takerOrderId, makerOrderId),
     INDEX IDX_CT (createdAt),
     PRIMARY KEY(id)
+) CHARACTER SET utf8 COLLATE utf8_general_ci AUTO_INCREMENT = 1000;
+
+CREATE TABLE unique_event (
+                              uniqueId VARCHAR(50) NOT NULL,
+                              createdAt BIGINT NOT NULL,
+                              sequenceId BIGINT NOT NULL,
+                              PRIMARY KEY(uniqueId)
 ) CHARACTER SET utf8 COLLATE utf8_general_ci AUTO_INCREMENT = 1000;

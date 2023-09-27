@@ -11,7 +11,7 @@ public final class OrderBy<T> extends CriteriaQuery<T>{
 
     OrderBy(Criteria<T> criteria, String orderBy) {
         super(criteria);
-        this.criteria = criteria;
+        orderBy(orderBy);
     }
 
     /**

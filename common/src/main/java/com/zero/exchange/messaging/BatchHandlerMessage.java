@@ -1,4 +1,4 @@
-package com.zero.exchange.model.messaging;
+package com.zero.exchange.messaging;
 
 import com.zero.exchange.message.AbstractMessage;
 
