@@ -8,6 +8,10 @@ exchange:
   config:
     order-book-depth: ${ORDER_BOOK_DEPTH:100}
     is-debug-mode: ${IS_DEBUG_MODE:FALSE}
+    hmac-key: ${EXCHANGE_HMAC_KEY:changeThisHmacKey}
+    api-endpoints:
+      trade-api: ${TRADE_API:http://localhost:8001}
+      trade-engin-api: ${TRADE_ENGIN-API:http://localhost:8002}
 
 logging:
   level:

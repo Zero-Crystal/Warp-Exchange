@@ -1,9 +1,9 @@
-package com.zero.exchange.model.trade;
+package com.zero.exchange.entity.trade;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.zero.exchange.enums.Direction;
 import com.zero.exchange.enums.OrderStatus;
-import com.zero.exchange.model.support.EntitySupport;
+import com.zero.exchange.entity.support.EntitySupport;
 import jakarta.persistence.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

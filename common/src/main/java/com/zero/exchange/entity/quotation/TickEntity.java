@@ -1,4 +1,4 @@
-package com.zero.exchange.model.quotation;
+package com.zero.exchange.entity.quotation;
 
 import com.zero.exchange.support.LoggerSupport;
 import jakarta.persistence.*;

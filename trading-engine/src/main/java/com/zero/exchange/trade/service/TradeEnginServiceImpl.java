@@ -1,6 +1,6 @@
 package com.zero.exchange.trade.service;
 
-import com.zero.exchange.bean.OrderBookBean;
+import com.zero.exchange.model.OrderBookBean;
 import com.zero.exchange.enums.UserType;
 import com.zero.exchange.enums.AssetType;
 import com.zero.exchange.enums.Direction;
@@ -16,9 +16,9 @@ import com.zero.exchange.messaging.MessageConsumer;
 import com.zero.exchange.messaging.MessageProducer;
 import com.zero.exchange.messaging.MessageTopic;
 import com.zero.exchange.messaging.MessagingFactory;
-import com.zero.exchange.model.quotation.TickEntity;
-import com.zero.exchange.model.trade.MatchDetailEntity;
-import com.zero.exchange.model.trade.OrderEntity;
+import com.zero.exchange.entity.quotation.TickEntity;
+import com.zero.exchange.entity.trade.MatchDetailEntity;
+import com.zero.exchange.entity.trade.OrderEntity;
 import com.zero.exchange.redis.RedisCache;
 import com.zero.exchange.redis.RedisService;
 import com.zero.exchange.support.LoggerSupport;

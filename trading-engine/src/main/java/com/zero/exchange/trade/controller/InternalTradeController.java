@@ -4,7 +4,7 @@ import com.zero.exchange.api.ApiResult;
 import com.zero.exchange.asset.entity.Asset;
 import com.zero.exchange.asset.service.AssetService;
 import com.zero.exchange.enums.AssetType;
-import com.zero.exchange.model.trade.OrderEntity;
+import com.zero.exchange.entity.trade.OrderEntity;
 import com.zero.exchange.order.OrderService;
 import com.zero.exchange.support.LoggerSupport;
 import org.springframework.beans.factory.annotation.Autowired;

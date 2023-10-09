@@ -11,6 +11,10 @@ public class ApiResult {
 
     private Object data;
 
+    public boolean isSuccess() {
+        return code == 200;
+    }
+
     public static ApiResult failure(String message) {
         return failure(-100, message);
     }

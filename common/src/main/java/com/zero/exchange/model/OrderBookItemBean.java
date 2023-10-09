@@ -1,4 +1,4 @@
-package com.zero.exchange.bean;
+package com.zero.exchange.model;
 
 import java.math.BigDecimal;
 

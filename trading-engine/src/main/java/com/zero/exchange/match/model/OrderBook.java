@@ -1,8 +1,8 @@
 package com.zero.exchange.match.model;
 
-import com.zero.exchange.bean.OrderBookItemBean;
+import com.zero.exchange.model.OrderBookItemBean;
 import com.zero.exchange.enums.Direction;
-import com.zero.exchange.model.trade.OrderEntity;
+import com.zero.exchange.entity.trade.OrderEntity;
 
 import java.util.*;
 

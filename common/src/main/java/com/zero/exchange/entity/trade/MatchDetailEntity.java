@@ -1,8 +1,8 @@
-package com.zero.exchange.model.trade;
+package com.zero.exchange.entity.trade;
 
 import com.zero.exchange.enums.Direction;
 import com.zero.exchange.enums.MatchType;
-import com.zero.exchange.model.support.EntitySupport;
+import com.zero.exchange.entity.support.EntitySupport;
 import jakarta.persistence.*;
 import org.jetbrains.annotations.NotNull;
 

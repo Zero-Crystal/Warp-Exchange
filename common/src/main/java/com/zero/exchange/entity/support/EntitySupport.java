@@ -1,4 +1,4 @@
-package com.zero.exchange.model.support;
+package com.zero.exchange.entity.support;
 
 public interface EntitySupport {
 

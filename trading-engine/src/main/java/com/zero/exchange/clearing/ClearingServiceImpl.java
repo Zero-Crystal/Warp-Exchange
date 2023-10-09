@@ -1,7 +1,7 @@
 package com.zero.exchange.clearing;
 
 import com.zero.exchange.enums.AssetType;
-import com.zero.exchange.model.trade.OrderEntity;
+import com.zero.exchange.entity.trade.OrderEntity;
 import com.zero.exchange.asset.service.AssetService;
 import com.zero.exchange.asset.entity.TransferType;
 import com.zero.exchange.match.model.MatchDetailRecord;

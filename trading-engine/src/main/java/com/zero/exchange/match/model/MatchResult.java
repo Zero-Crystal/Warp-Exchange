@@ -1,6 +1,6 @@
 package com.zero.exchange.match.model;
 
-import com.zero.exchange.model.trade.OrderEntity;
+import com.zero.exchange.entity.trade.OrderEntity;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;

@@ -1,7 +1,9 @@
 package com.zero.exchange.api.redis;
 
+import com.zero.exchange.api.ApiErrorResponse;
+
 public class ApiException extends RuntimeException {
-    private ApiErrorResponse error;
+    public final ApiErrorResponse error;
 
     public ApiException(ApiError error) {
         super(error.toString());

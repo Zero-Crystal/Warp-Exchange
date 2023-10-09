@@ -1,6 +1,6 @@
 package com.zero.exchange.clearing;
 
-import com.zero.exchange.model.trade.OrderEntity;
+import com.zero.exchange.entity.trade.OrderEntity;
 import com.zero.exchange.match.model.MatchResult;
 
 public interface ClearingService {

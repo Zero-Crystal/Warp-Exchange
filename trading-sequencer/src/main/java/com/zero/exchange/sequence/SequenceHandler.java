@@ -2,8 +2,8 @@ package com.zero.exchange.sequence;
 
 import com.zero.exchange.message.event.AbstractEvent;
 import com.zero.exchange.messaging.MessageConvert;
-import com.zero.exchange.model.trade.EventEntity;
-import com.zero.exchange.model.trade.UniqueEventEntity;
+import com.zero.exchange.entity.trade.EventEntity;
+import com.zero.exchange.entity.trade.UniqueEventEntity;
 import com.zero.exchange.support.AbstractDbService;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.stereotype.Component;

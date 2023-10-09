@@ -1,7 +1,7 @@
 package com.zero.exchange.store;
 
 import com.zero.exchange.message.event.AbstractEvent;
-import com.zero.exchange.model.support.EntitySupport;
+import com.zero.exchange.entity.support.EntitySupport;
 
 import java.util.List;
 

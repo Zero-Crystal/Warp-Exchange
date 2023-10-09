@@ -1,6 +1,6 @@
 package com.zero.exchange.message;
 
-import com.zero.exchange.model.quotation.TickEntity;
+import com.zero.exchange.entity.quotation.TickEntity;
 
 import java.util.List;
 

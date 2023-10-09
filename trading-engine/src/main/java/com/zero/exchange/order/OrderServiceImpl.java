@@ -2,7 +2,7 @@ package com.zero.exchange.order;
 
 import com.zero.exchange.enums.AssetType;
 import com.zero.exchange.enums.Direction;
-import com.zero.exchange.model.trade.OrderEntity;
+import com.zero.exchange.entity.trade.OrderEntity;
 import com.zero.exchange.asset.service.AssetService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;

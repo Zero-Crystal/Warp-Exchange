@@ -2,7 +2,7 @@ package com.zero.exchange.order;
 
 import com.zero.exchange.enums.AssetType;
 import com.zero.exchange.enums.Direction;
-import com.zero.exchange.model.trade.OrderEntity;
+import com.zero.exchange.entity.trade.OrderEntity;
 import com.zero.exchange.asset.entity.TransferType;
 import com.zero.exchange.asset.service.AssetServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
