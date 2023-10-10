@@ -1,7 +1,7 @@
 package com.zero.exchange.service.impl;
 
-import com.zero.exchange.api.redis.ApiError;
-import com.zero.exchange.api.redis.ApiException;
+import com.zero.exchange.api.ApiError;
+import com.zero.exchange.api.ApiException;
 import com.zero.exchange.service.TradeEnginApiService;
 import com.zero.exchange.support.LoggerSupport;
 import okhttp3.*;

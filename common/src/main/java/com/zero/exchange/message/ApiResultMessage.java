@@ -1,17 +1,17 @@
 package com.zero.exchange.message;
 
-import com.zero.exchange.api.redis.ApiError;
-import com.zero.exchange.api.ApiErrorResponse;
+import com.zero.exchange.api.ApiResult;
+import com.zero.exchange.api.ApiError;
 
 public class ApiResultMessage extends AbstractMessage {
 
-    private static ApiErrorResponse CREATE_ORDER_FAILED = new ApiErrorResponse(ApiError.NO_ENOUGH_ASSET,
+    private static ApiResult CREATE_ORDER_FAILED = ApiResult.failure(ApiError.NO_ENOUGH_ASSET.getCode(),
             "not enough asset", null);
 
-    private static ApiErrorResponse CANCEL_ORDER_FAILED = new ApiErrorResponse(ApiError.ORDER_NOT_FOUND,
+    private static ApiResult CANCEL_ORDER_FAILED = ApiResult.failure(ApiError.ORDER_NOT_FOUND.getCode(),
             "order not found", null);
 
-    public ApiErrorResponse error;
+    public ApiResult error;
 
     public Object result;
 

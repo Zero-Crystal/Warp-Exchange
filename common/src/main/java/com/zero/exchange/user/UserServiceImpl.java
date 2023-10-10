@@ -1,7 +1,7 @@
 package com.zero.exchange.user;
 
-import com.zero.exchange.api.redis.ApiError;
-import com.zero.exchange.api.redis.ApiException;
+import com.zero.exchange.api.ApiError;
+import com.zero.exchange.api.ApiException;
 import com.zero.exchange.enums.UserType;
 import com.zero.exchange.entity.ui.ApiAuthEntity;
 import com.zero.exchange.entity.ui.PasswordAuthEntity;

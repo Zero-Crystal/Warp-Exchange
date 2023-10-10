@@ -1,8 +1,8 @@
 package com.zero.exchange.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.zero.exchange.api.redis.ApiError;
-import com.zero.exchange.api.redis.ApiException;
+import com.zero.exchange.api.ApiError;
+import com.zero.exchange.api.ApiException;
 import com.zero.exchange.model.AuthToken;
 import com.zero.exchange.context.UserContext;
 import com.zero.exchange.entity.ui.ApiAuthEntity;
@@ -147,7 +147,7 @@ public class ApiFilterRegistrationBean extends FilterRegistrationBean<Filter> {
             response.sendError(400);
             response.setContentType("application/json");
             PrintWriter pw = response.getWriter();
-            pw.write(objectMapper.writeValueAsString(e.error));
+            pw.write(objectMapper.writeValueAsString(e.errorResult));
             pw.flush();
         }
     }

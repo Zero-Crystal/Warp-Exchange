@@ -26,6 +26,14 @@ public class ApiResult {
         return apiResult;
     }
 
+    public static ApiResult failure(Integer code, String message, Object data) {
+        ApiResult apiResult = new ApiResult();
+        apiResult.setCode(code);
+        apiResult.setMessage(message);
+        apiResult.setData(data);
+        return apiResult;
+    }
+
     public static ApiResult success(Object data) {
         ApiResult apiResult = new ApiResult();
         apiResult.setCode(200);

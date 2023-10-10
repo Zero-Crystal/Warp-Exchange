@@ -1,7 +1,7 @@
 package com.zero.exchange.model;
 
-import com.zero.exchange.api.redis.ApiError;
-import com.zero.exchange.api.redis.ApiException;
+import com.zero.exchange.api.ApiError;
+import com.zero.exchange.api.ApiException;
 import com.zero.exchange.enums.AssetType;
 import com.zero.exchange.util.IdUtil;
 

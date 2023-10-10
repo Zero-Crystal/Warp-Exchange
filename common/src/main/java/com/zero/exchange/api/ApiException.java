@@ -1,22 +1,20 @@
-package com.zero.exchange.api.redis;
-
-import com.zero.exchange.api.ApiErrorResponse;
+package com.zero.exchange.api;
 
 public class ApiException extends RuntimeException {
-    public final ApiErrorResponse error;
+    public final ApiResult errorResult;
 
     public ApiException(ApiError error) {
         super(error.toString());
-        this.error = new ApiErrorResponse(error, "", null);
+        errorResult = ApiResult.failure(error.getCode(), error.getMessage());
     }
 
     public ApiException(ApiError error, String data) {
         super(error.toString());
-        this.error = new ApiErrorResponse(error, "", data);
+        errorResult = ApiResult.failure(error.getCode(), error.getMessage(), data);
     }
 
     public ApiException(ApiError error, String data, String message) {
         super(error.toString());
-        this.error = new ApiErrorResponse(error, message, data);
+        errorResult = ApiResult.failure(error.getCode(), message, data);
     }
 }
