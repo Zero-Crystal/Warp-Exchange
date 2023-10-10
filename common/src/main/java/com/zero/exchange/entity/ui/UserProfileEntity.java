@@ -4,7 +4,7 @@ import com.zero.exchange.entity.support.EntitySupport;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "user_profile", uniqueConstraints = @UniqueConstraint(name = "UNI_EMAIL", columnNames = {"email"}))
+@Table(name = "user_profiles", uniqueConstraints = @UniqueConstraint(name = "UNI_EMAIL", columnNames = {"email"}))
 public class UserProfileEntity implements EntitySupport {
 
     /**

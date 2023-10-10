@@ -4,7 +4,7 @@ import com.zero.exchange.entity.support.EntitySupport;
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "unique_event")
+@Table(name = "unique_events")
 public class UniqueEventEntity implements EntitySupport {
 
     @Id

@@ -36,7 +36,7 @@ public class DbTemplate {
         this.jdbcTemplate = jdbcTemplate;
         String currentPackage = getClass().getPackageName();
         int pos = currentPackage.lastIndexOf(".");
-        String entityPackage = currentPackage.substring(0, pos) + ".model";
+        String entityPackage = currentPackage.substring(0, pos) + ".entity";
         List<Class<?>> entityClassList = scanEntities(entityPackage);
         Map<Class<?>, Mapper<?>> entityClassMapper = new HashMap<>();
         try {

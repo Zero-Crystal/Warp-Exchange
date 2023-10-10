@@ -7,13 +7,15 @@ import com.zero.exchange.support.LoggerSupport;
 import okhttp3.*;
 import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
+@Service
 public class TradeEnginApiServiceImpl extends LoggerSupport implements TradeEnginApiService {
 
-    @Value("#{exchange.config.api-endpoints.trade-engin-api}")
+    @Value("${exchange.config.api-endpoints.trade-engin-api}")
     private String tradeEnginEndPoint;
 
     private OkHttpClient httpClient = new OkHttpClient.Builder()

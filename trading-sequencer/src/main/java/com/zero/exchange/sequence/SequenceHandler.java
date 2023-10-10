@@ -101,7 +101,6 @@ public class SequenceHandler extends AbstractDbService {
      * @return long
      * */
     public long getMaxSequenceId() {
-        System.out.println(db.exportDDL());
         EventEntity last = db.from(EventEntity.class).orderBy("sequenceId").desc().first();
         if (last == null) {
             log.info("can not find the max sequence Id");
