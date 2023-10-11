@@ -2,7 +2,7 @@ package com.zero.exchange.service.impl;
 
 import com.zero.exchange.message.event.AbstractEvent;
 import com.zero.exchange.messaging.MessageProducer;
-import com.zero.exchange.messaging.MessageTopic;
+import com.zero.exchange.messaging.Messaging;
 import com.zero.exchange.messaging.MessagingFactory;
 import com.zero.exchange.service.SendEventService;
 import com.zero.exchange.support.LoggerSupport;
@@ -20,7 +20,7 @@ public class SendEventServiceImpl extends LoggerSupport implements SendEventServ
 
     @PostConstruct
     public void init() {
-        producer = messagingFactory.createMessageProducer(MessageTopic.Topic.SEQUENCE, AbstractEvent.class);
+        producer = messagingFactory.createMessageProducer(Messaging.Topic.SEQUENCE, AbstractEvent.class);
     }
 
     @Override

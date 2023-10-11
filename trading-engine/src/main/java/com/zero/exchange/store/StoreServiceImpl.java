@@ -21,13 +21,13 @@ public class StoreServiceImpl extends AbstractDbService implements StoreService 
 
     @Override
     public List<AbstractEvent> loadEventsFromDB(long lastSequenceId) {
-        List<EventEntity> eventList = db.from(EventEntity.class).where("sequenceId > ", lastSequenceId)
+        List<EventEntity> eventList = db.from(EventEntity.class).where("sequenceId > ?", lastSequenceId)
                 .orderBy("sequenceId").limit(1000).list();
         return eventList.stream().map(e -> (AbstractEvent) messageConvert.deserialize(e.data)).collect(Collectors.toList());
     }
 
     @Override
     public void insertIgnoreList(List<? extends EntitySupport> list) {
-        db.insetIgnore(list);
+        db.insertIgnore(list);
     }
 }

@@ -30,7 +30,7 @@ final class Criteria<T> {
         builder.append(select == null ? "*" : String.join(", ", select));
         builder.append(" FROM ").append(table);
         if (where != null) {
-            builder.append("WHERE ").append(String.join(" ", where));
+            builder.append(" WHERE ").append(String.join(" ", where));
         }
         if (orderBy != null) {
             builder.append(" ORDER BY ").append(String.join(", ", orderBy));

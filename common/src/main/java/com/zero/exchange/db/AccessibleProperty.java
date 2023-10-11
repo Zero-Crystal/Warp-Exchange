@@ -109,11 +109,11 @@ public class AccessibleProperty {
     }
 
     boolean isInsert() {
-        if (isId()) {
+        if (isIdentityId()) {
             return false;
         }
         Column col = this.field.getAnnotation(Column.class);
-        return col == null ? false : col.insertable();
+        return col == null || col.insertable();
     }
 
     boolean isUpdate() {
@@ -121,7 +121,7 @@ public class AccessibleProperty {
             return false;
         }
         Column col = this.field.getAnnotation(Column.class);
-        return col == null ? false : col.updatable();
+        return col == null || col.updatable();
     }
 
     private String getColumnDefinition(Class<?> propertyType) {

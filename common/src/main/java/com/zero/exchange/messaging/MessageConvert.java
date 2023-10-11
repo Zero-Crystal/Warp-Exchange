@@ -61,7 +61,7 @@ public class MessageConvert {
      * */
     public String serialize(AbstractMessage message) {
         String messageType = message.getClass().getName();
-        String jsonData = JsonUtil.writeJson(messageType);
+        String jsonData = JsonUtil.writeJson(message);
         return messageType + SEP + jsonData;
     }
 

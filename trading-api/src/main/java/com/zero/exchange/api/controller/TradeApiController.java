@@ -13,12 +13,14 @@ import com.zero.exchange.model.OrderBookBean;
 import com.zero.exchange.context.UserContext;
 import com.zero.exchange.entity.trade.OrderEntity;
 import com.zero.exchange.model.OrderVO;
+import com.zero.exchange.model.UserSignUpVO;
 import com.zero.exchange.redis.RedisCache;
 import com.zero.exchange.redis.RedisService;
 import com.zero.exchange.service.HistoryService;
 import com.zero.exchange.service.SendEventService;
 import com.zero.exchange.service.TradeEnginApiService;
 import com.zero.exchange.support.LoggerSupport;
+import com.zero.exchange.user.UserService;
 import com.zero.exchange.util.IdUtil;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,6 +52,9 @@ public class TradeApiController extends LoggerSupport implements TradeApi {
     private SendEventService sendEventService;
 
     @Autowired
+    private UserService userService;
+
+    @Autowired
     private ObjectMapper objectMapper;
 
     private Map<String, DeferredResult<ResponseEntity<String>>> deferredResultMap = new HashMap<>();
@@ -67,6 +72,14 @@ public class TradeApiController extends LoggerSupport implements TradeApi {
     @GetMapping(value = "/timestamp", produces = "application/json")
     public ApiResult timestamp() {
         return ApiResult.success(Map.of("timestamp", System.currentTimeMillis()));
+    }
+
+    @Override
+    @PostMapping(value = "/signup", produces = "application/json")
+    public ApiResult signUp(@RequestBody UserSignUpVO userSignUpVO) {
+        log.info("注册账号：{}", userSignUpVO.toString());
+        userSignUpVO.validate();
+        return ApiResult.success(userService.signUp(userSignUpVO.email, userSignUpVO.name, userSignUpVO.password));
     }
 
     @Override

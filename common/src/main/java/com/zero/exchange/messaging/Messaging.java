@@ -1,6 +1,6 @@
 package com.zero.exchange.messaging;
 
-public interface MessageTopic {
+public interface Messaging {
     enum Topic {
 
         /**

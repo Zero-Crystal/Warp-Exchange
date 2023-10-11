@@ -39,4 +39,4 @@ spring:
 # Dev Configuration
 logging:
   level:
-    com.exchange: ${LOGGING_EXCHANGE_LEVEL:DEBUG}
+    com.zero.exchange: ${LOGGING_EXCHANGE_LEVEL:DEBUG}

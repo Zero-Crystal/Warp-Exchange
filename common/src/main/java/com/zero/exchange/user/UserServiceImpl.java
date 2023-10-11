@@ -12,7 +12,9 @@ import com.zero.exchange.util.HashUtil;
 import com.zero.exchange.util.RandomUtil;
 import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
+@Transactional
 @Component
 public class UserServiceImpl extends AbstractDbService implements UserService {
 

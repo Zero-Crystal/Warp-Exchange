@@ -186,7 +186,7 @@ public class DbTemplate {
     /**
      * insert bean list
      * */
-    public <T> void inset(List<T> beans) {
+    public <T> void insert(List<T> beans) {
         for (T bean : beans) {
             doInsert(bean, false);
         }
@@ -195,7 +195,7 @@ public class DbTemplate {
     /**
      * insert bean list with ignore
      * */
-    public <T> void insetIgnore(List<T> beans) {
+    public <T> void insertIgnore(List<T> beans) {
         for (T bean : beans) {
             doInsert(bean, true);
         }
@@ -204,7 +204,7 @@ public class DbTemplate {
     /**
      * insert bean list
      * */
-    public <T> void inset(Stream<T> beans) {
+    public <T> void insert(Stream<T> beans) {
         beans.forEach(b -> {
             doInsert(b, false);
         });
@@ -213,7 +213,7 @@ public class DbTemplate {
     /**
      * insert bean list with ignore
      * */
-    public <T> void insetIgnore(Stream<T> beans) {
+    public <T> void insertIgnore(Stream<T> beans) {
         beans.forEach(b -> {
             doInsert(b, true);
         });

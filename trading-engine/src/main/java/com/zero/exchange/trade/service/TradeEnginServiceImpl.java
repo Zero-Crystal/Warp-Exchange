@@ -14,7 +14,7 @@ import com.zero.exchange.message.event.OrderRequestEvent;
 import com.zero.exchange.message.event.TransferEvent;
 import com.zero.exchange.messaging.MessageConsumer;
 import com.zero.exchange.messaging.MessageProducer;
-import com.zero.exchange.messaging.MessageTopic;
+import com.zero.exchange.messaging.Messaging;
 import com.zero.exchange.messaging.MessagingFactory;
 import com.zero.exchange.entity.quotation.TickEntity;
 import com.zero.exchange.entity.trade.MatchDetailEntity;
@@ -150,8 +150,8 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
     @PostConstruct
     public void init() {
         shaUpdateOrderBookLua = redisService.loadScriptFromClassPath("/redis/update-orderBook.lua");
-        producer = messagingFactory.createMessageProducer(MessageTopic.Topic.TICK, TickMessage.class);
-        consumer = messagingFactory.createBatchMessageListener(MessageTopic.Topic.TRADE,
+        producer = messagingFactory.createMessageProducer(Messaging.Topic.TICK, TickMessage.class);
+        consumer = messagingFactory.createBatchMessageListener(Messaging.Topic.TRADE,
                 IpUtil.getHostId(), this::receiveMessage);
         dbThread = new Thread(this::runOnDbThread, "async-db");
         dbThread.start();
@@ -163,6 +163,7 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
         apiResultThread.start();
         orderBooKThread = new Thread(this::runOnOrderBookThread, "async-orderBook");
         orderBooKThread.start();
+        recoveryTradeEngineState();
     }
 
     @PreDestroy
@@ -190,7 +191,7 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
         }
         // 1.判断是否是重复消息
         if (event.sequenceId <= this.lastSequenceId) {
-            log.warn("消息重复, sequenceId={}", event.sequenceId);
+            log.warn("消息重复, sequenceId={}, uniqueId={}", event.sequenceId, event.uniqueId);
             return;
         }
         // 2.判断是否丢失了消息
@@ -202,10 +203,11 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
                 return;
             }
             // 重新分发消息
+            log.info("消息丢失，正在重新分发中，lastSequenceId={}，待分发消息数量 {} 条...\n{}", lastSequenceId, lostEvents.size(), lostEvents);
             for (AbstractEvent e : lostEvents) {
                 processEvent(e);
-                return;
             }
+            return;
         }
         // 3.判断当前消息是否指向上一条消息
         if (event.previousId != this.lastSequenceId) {
@@ -224,11 +226,13 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
         // debug模式下，验证消息内部状态的完整性
         if (isDebugMode) {
             validate();
+            debug();
         }
     }
 
     @Override
     public void createOrder(OrderRequestEvent event) {
+        log.info("[TRADE-ENGINE] process create message from user[{}]", event.userId);
         // 创建订单
         ZonedDateTime zonedDateTime = Instant.ofEpochMilli(event.createAt).atZone(zoneId);
         Integer year = zonedDateTime.getYear();
@@ -240,6 +244,7 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
             log.error("订单[{}]创建失败：{}", orderId, event);
             // 推送失败消息
             apiResultQueue.add(ApiResultMessage.createOrderFailed(event.refId, event.createAt));
+            return;
         }
         // 撮合
         MatchResult matchResult = matchService.matchOrder(event.sequenceId, order);
@@ -296,6 +301,7 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
 
     @Override
     public void cancelOrder(OrderCancelEvent event) {
+        log.info("[TRADE-ENGINE] process cancel message from user[{}]", event.userId);
         OrderEntity order = orderService.getOrderByOrderId(event.orderId);
         // 未找到该订单或该订单不属于该用户
         if (order == null || order.userId.longValue() != event.userId.longValue()) {
@@ -308,11 +314,12 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
         clearingService.clearingCancel(order);
         // 发送成功消息
         notificationQueue.add(createNotificationMessage(event.createAt, "order_cancel", order.userId, order));
-        apiResultQueue.add(ApiResultMessage.cancelOrderFailed(event.refId, event.createAt));
+        apiResultQueue.add(ApiResultMessage.orderSuccess(event.refId, event.createAt, order));
     }
 
     @Override
     public boolean transfer(TransferEvent event) {
+        log.info("[TRADE-ENGINE] process transfer message from user[id: {}, type: {}] to user[{}]", event.fromUserId, event.assetType, event.toUserId);
         boolean isSuccess = assetService.baseTransfer(TransferType.AVAILABLE_TO_AVAILABLE, event.fromUserId, event.toUserId,
                 event.assetType, event.amount, event.sufficient);
         return isSuccess;
@@ -321,17 +328,14 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
     @Override
     public void validate() {
         log.info("--------------------start validate trade system--------------------");
-        long startTime = System.currentTimeMillis();
         validateAsset();
         validateOrder();
         validateMatch();
-        long costTime = System.currentTimeMillis() - startTime;
         log.info("--------------------------- validate ok ---------------------------");
     }
 
     @Override
     public void debug() {
-        System.out.println();
         System.out.println("=========================================== trade engin debug ===========================================");
         assetService.debug();
         orderService.debug();
@@ -664,6 +668,38 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
         }
         // 验证订单系统中所有活跃的订单都已验证
         require(copyAllActiveOrders.isEmpty(), "订单系统中存在不存在于订单系统的订单");
+    }
+
+    /**
+     * 恢复交易引擎的状态：
+     * v1.0：读取数据库中的消息事件并重新分发
+     * */
+    private void recoveryTradeEngineState() {
+        Thread thread = new Thread(() -> {
+            try {
+                Thread.sleep(5 * 1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            System.out.println("------------------------------------------start to recovery trade engine state------------------------------------------");
+            if (lastSequenceId != 0) {
+                log.info("当前 lastSequenceId = {}，引擎状态不需要恢复", lastSequenceId);
+                return;
+            }
+            List<AbstractEvent> lostEvents = storeService.loadEventsFromDB(lastSequenceId);
+            if (lostEvents.isEmpty()) {
+                log.info("未获取到需要恢复的消息...");
+                return;
+            }
+            // 重新分发消息
+            log.info("正在恢复引擎状态中，lastSequenceId={}，待分发消息数量 {} 条...\n{}", lastSequenceId, lostEvents.size(), lostEvents);
+            for (AbstractEvent e : lostEvents) {
+                processEvent(e);
+            }
+            System.out.println("--------------------------------------------trade engine state recovery end--------------------------------------------");
+            return;
+        });
+        thread.start();
     }
 
     /**

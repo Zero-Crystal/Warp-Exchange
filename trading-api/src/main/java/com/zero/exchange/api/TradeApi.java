@@ -1,6 +1,7 @@
 package com.zero.exchange.api;
 
 import com.zero.exchange.model.OrderVO;
+import com.zero.exchange.model.UserSignUpVO;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.context.request.async.DeferredResult;
 
@@ -14,6 +15,14 @@ public interface TradeApi {
      * @return ApiResult
      * */
     ApiResult timestamp();
+
+    /**
+     * 注册账号
+     *
+     * @param userSignUpVO
+     * @return ApiResult
+     * */
+    ApiResult signUp(UserSignUpVO userSignUpVO);
 
     /**
      * 获取用户资产

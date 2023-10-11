@@ -13,23 +13,11 @@ import jakarta.persistence.*;
 public class EventEntity implements EntitySupport {
 
     /**
-     * id
+     * 消息定序 id
      * */
     @Id
     @Column(nullable = false, updatable = false)
-    public Integer id;
-
-    /**
-     * 消息定序 id
-     * */
-    @Column(nullable = false, updatable = false)
     public Long sequenceId;
-
-    /**
-     * 消息创建时间
-     * */
-    @Column(nullable = false, updatable = false)
-    public long createAt;
 
     /**
      * 消息数据；格式：JSON
@@ -43,9 +31,15 @@ public class EventEntity implements EntitySupport {
     @Column(nullable = false, updatable = false)
     public Long previousId;
 
+    /**
+     * 消息创建时间
+     * */
+    @Column(nullable = false, updatable = false)
+    public long createAt;
+
     @Override
     public String toString() {
-        return "EventEntity [" + "id: " + id + ", sequencerId: " + sequenceId + ", createAt: " + createAt +
-                ", data: " + data + ", previousId: " + previousId + ']';
+        return "EventEntity [" + "sequenceId: " + sequenceId + ", data: '" + data +
+                ", previousId: " + previousId + ", createAt: " + createAt + "]";
     }
 }

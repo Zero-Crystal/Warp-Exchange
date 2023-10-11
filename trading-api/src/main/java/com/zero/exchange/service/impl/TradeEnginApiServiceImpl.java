@@ -26,8 +26,10 @@ public class TradeEnginApiServiceImpl extends LoggerSupport implements TradeEngi
 
     @Override
     public String get(String url) throws IOException {
+        String reqUrl = tradeEnginEndPoint + url;
+        log.info("GET --> {}", reqUrl);
         Request request = new Request.Builder()
-                .url(tradeEnginEndPoint + url)
+                .url(reqUrl)
                 .addHeader("Accept", "*/*")
                 .build();
         try (Response response = httpClient.newCall(request).execute()) {
@@ -41,6 +43,7 @@ public class TradeEnginApiServiceImpl extends LoggerSupport implements TradeEngi
                     log.error("服务器请求成功，但返回值为空：{}", result);
                     throw new ApiException(ApiError.INTERNAL_SERVER_ERROR, "服务器返回为空");
                 }
+                log.info("    <-- {}", result);
                 return result;
             }
         }

@@ -47,7 +47,7 @@ public class MessagingFactory extends LoggerSupport {
         try(AdminClient client = AdminClient.create(kafkaAdmin.getConfigurationProperties())) {
             Set<String> allTopics = client.listTopics().names().get();
             List<NewTopic> newTopicList = new ArrayList<>();
-            for (MessageTopic.Topic topic : MessageTopic.Topic.values()) {
+            for (Messaging.Topic topic : Messaging.Topic.values()) {
                 if (!allTopics.contains(topic.name())) {
                     newTopicList.add(new NewTopic(topic.name(), topic.getPartition(), (short) 1));
                 }
@@ -62,22 +62,22 @@ public class MessagingFactory extends LoggerSupport {
         log.info("init kafka is ok");
     }
 
-    public <T extends AbstractMessage> MessageProducer<T> createMessageProducer(MessageTopic.Topic topic, Class<T> messageClass) {
+    public <T extends AbstractMessage> MessageProducer<T> createMessageProducer(Messaging.Topic topic, Class<T> messageClass) {
         log.info("init message producer of topic[{}]...", topic);
         final String topicName = topic.name();
-        return new MessageProducer<T>() {
+        return new MessageProducer<>() {
             @Override
-            public void sendMessage(T message) {
+            public void sendMessage(AbstractMessage message) {
                 kafkaTemplate.send(topicName, messageConvert.serialize(message));
             }
         };
     }
 
-    public <T extends AbstractMessage> MessageConsumer createBatchMessageListener(MessageTopic.Topic topic, String groupId, BatchHandlerMessage<T> batchHandlerMessage) {
+    public <T extends AbstractMessage> MessageConsumer createBatchMessageListener(Messaging.Topic topic, String groupId, BatchHandlerMessage<T> batchHandlerMessage) {
         return createBatchMessageListener(topic, groupId, batchHandlerMessage, null);
     }
 
-    public <T extends AbstractMessage> MessageConsumer createBatchMessageListener(MessageTopic.Topic topic, String groupId, BatchHandlerMessage<T> batchHandlerMessage,
+    public <T extends AbstractMessage> MessageConsumer createBatchMessageListener(Messaging.Topic topic, String groupId, BatchHandlerMessage<T> batchHandlerMessage,
                                                                                   CommonErrorHandler errorHandler) {
         log.info("init message consumer of topic[{}]...", topic);
         ConcurrentMessageListenerContainer<String, String> listenerContainer = listenerContainerFactory.createListenerContainer(new KafkaListenerEndpointAdapter() {
@@ -94,9 +94,9 @@ public class MessagingFactory extends LoggerSupport {
         listenerContainer.setupMessageListener(new BatchMessageListener<String, String>() {
             @Override
             @SuppressWarnings("unchecked")
-            public void onMessage(List<ConsumerRecord<String, String>> consumerRecords) {
-                List<T> messages = new ArrayList<>(consumerRecords.size());
-                for (ConsumerRecord<String, String> consumerRecord : consumerRecords) {
+            public void onMessage(List<ConsumerRecord<String, String>> data) {
+                List<T> messages = new ArrayList<>(data.size());
+                for (ConsumerRecord<String, String> consumerRecord : data) {
                     AbstractMessage message = messageConvert.deserialize(consumerRecord.value());
                     messages.add((T) message);
                 }

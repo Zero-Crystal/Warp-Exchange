@@ -33,8 +33,10 @@ public class InternalTradeController extends LoggerSupport implements InternalTr
     public ApiResult getAssets(@PathVariable Long userId) {
         Map<AssetType, Asset> assetMap = assetService.getAssets(userId);
         if (assetMap.isEmpty()) {
+            log.info("user[{}] asset empty", userId);
             ApiResult.failure("未获取到该用户的资产信息");
         }
+        log.info("get user[{}] asset[{}]", userId, assetMap);
         return ApiResult.success(assetMap);
     }
 
@@ -43,6 +45,7 @@ public class InternalTradeController extends LoggerSupport implements InternalTr
     public ApiResult getOrders(@PathVariable Long userId) {
         ConcurrentMap<Long, OrderEntity> userOrders = orderService.getOrderMapByUserId(userId);
         if (userOrders == null || userOrders.isEmpty()) {
+            log.info("未获取到用户[{}]的订单信息", userId);
             return ApiResult.failure("未获取到该用户的订单信息");
         }
         List<OrderEntity> orderList = new ArrayList<>();
@@ -53,6 +56,7 @@ public class InternalTradeController extends LoggerSupport implements InternalTr
             }
             orderList.add(order);
         }
+        log.info("获取用户[{}]的订单信息：{}", userId, orderList);
         return ApiResult.success(orderList);
     }
 
@@ -61,8 +65,10 @@ public class InternalTradeController extends LoggerSupport implements InternalTr
     public ApiResult getOrder(@PathVariable Long userId, @PathVariable Long orderId) {
         OrderEntity userOrder = orderService.getOrderByOrderId(orderId);
         if (userOrder == null || userOrder.userId.longValue() != userId.longValue()) {
+            log.info("未获取到用户[{}]的订单信息", userId);
             return ApiResult.failure("未获取到该用户的订单");
         }
+        log.info("获取用户[{}]的订单信息：{}", userId, userOrder);
         return ApiResult.success(userOrder);
     }
 }

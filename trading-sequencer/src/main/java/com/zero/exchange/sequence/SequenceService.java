@@ -66,7 +66,7 @@ public class SequenceService extends LoggerSupport implements CommonErrorHandler
 
     private void runOnSequenceThread() {
         log.info("start sequence thread...");
-        producer = messagingFactory.createMessageProducer(MessageTopic.Topic.SEQUENCE, AbstractEvent.class);
+        producer = messagingFactory.createMessageProducer(Messaging.Topic.TRADE, AbstractEvent.class);
 
         // init max sequence id
         sequenceId = new AtomicLong(sequenceHandler.getMaxSequenceId());
@@ -74,7 +74,7 @@ public class SequenceService extends LoggerSupport implements CommonErrorHandler
 
         // create consumer and share same group id
         log.info("create consumer for [{}]", getClass().getName());
-        MessageConsumer consumer = messagingFactory.createBatchMessageListener(MessageTopic.Topic.SEQUENCE,
+        MessageConsumer consumer = messagingFactory.createBatchMessageListener(Messaging.Topic.SEQUENCE,
                 GROUP_ID, this::processMessage, this);
 
         //start running
@@ -110,10 +110,12 @@ public class SequenceService extends LoggerSupport implements CommonErrorHandler
             sequenceMessages = sequenceHandler.sequenceMessage(messageConvert, sequenceId, messages);
         } catch (Exception e) {
             log.error("exception happened in Sequence!");
+            e.printStackTrace();
             shutdown();
             panic();
             throw new Error(e);
         }
+        log.info(sequenceMessages.toString());
         log.info("----> sequence cost {} ms", System.currentTimeMillis() - startTime);
         sendMessage(sequenceMessages);
     }

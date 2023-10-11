@@ -20,15 +20,15 @@ public class OrderVO implements ValidatableVO {
         if (price == null) {
             throw new ApiException(ApiError.PARAMETER_INVALID, "invalid param");
         }
-        price.setScale(2, RoundingMode.DOWN);
+        this.price = this.price.setScale(2, RoundingMode.DOWN);
         if (price.signum() <= 0) {
             throw new ApiException(ApiError.PARAMETER_INVALID, "price must be positive");
         }
         if (quantity == null) {
             throw new ApiException(ApiError.PARAMETER_INVALID, "invalid param");
         }
-        quantity.setScale(2, RoundingMode.DOWN);
-        if (quantity.signum() <= 2) {
+        this.quantity = this.quantity.setScale(2, RoundingMode.DOWN);
+        if (quantity.signum() <= 0) {
             throw new ApiException(ApiError.PARAMETER_INVALID, "quantity must be positive");
         }
         if (direction == null) {
