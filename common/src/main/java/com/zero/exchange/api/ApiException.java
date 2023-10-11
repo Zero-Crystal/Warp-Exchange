@@ -5,12 +5,12 @@ public class ApiException extends RuntimeException {
 
     public ApiException(ApiError error) {
         super(error.toString());
-        errorResult = ApiResult.failure(error.getCode(), error.getMessage());
+        errorResult = ApiResult.failure(error);
     }
 
     public ApiException(ApiError error, String data) {
         super(error.toString());
-        errorResult = ApiResult.failure(error.getCode(), error.getMessage(), data);
+        errorResult = ApiResult.failure(error, data);
     }
 
     public ApiException(ApiError error, String data, String message) {

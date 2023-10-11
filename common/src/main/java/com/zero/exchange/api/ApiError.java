@@ -1,6 +1,9 @@
 package com.zero.exchange.api;
 
 public enum ApiError {
+
+    INTERNAL_SERVER_ERROR(-100, "服务器异常"),
+
     PARAMETER_INVALID(-101, "参数异常"),
 
     AUTH_SIGNIN_REQUIRE(-102, "请先登录系统"),
@@ -15,7 +18,7 @@ public enum ApiError {
 
     OPERATION_TIMEOUT(-107, "操作超时"),
 
-    INTERNAL_SERVER_ERROR(-108, "服务器异常");
+    OK(200, "请求成功");
 
     private int code;
 

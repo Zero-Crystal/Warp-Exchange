@@ -2,6 +2,7 @@ package com.zero.exchange.model;
 
 import com.zero.exchange.api.ApiError;
 import com.zero.exchange.api.ApiException;
+import com.zero.exchange.api.ApiResult;
 import com.zero.exchange.enums.Direction;
 
 import java.math.BigDecimal;
@@ -16,24 +17,29 @@ public class OrderVO implements ValidatableVO {
     public Direction direction;
 
     @Override
-    public void validate() {
+    public ApiError validate() {
         if (price == null) {
-            throw new ApiException(ApiError.PARAMETER_INVALID, "invalid param");
+            return ApiError.PARAMETER_INVALID;
         }
         this.price = this.price.setScale(2, RoundingMode.DOWN);
         if (price.signum() <= 0) {
-            throw new ApiException(ApiError.PARAMETER_INVALID, "price must be positive");
+            ApiError error = ApiError.PARAMETER_INVALID;
+            error.setMessage("price must be positive");
+            return error;
         }
         if (quantity == null) {
-            throw new ApiException(ApiError.PARAMETER_INVALID, "invalid param");
+            return ApiError.PARAMETER_INVALID;
         }
         this.quantity = this.quantity.setScale(2, RoundingMode.DOWN);
         if (quantity.signum() <= 0) {
-            throw new ApiException(ApiError.PARAMETER_INVALID, "quantity must be positive");
+            ApiError error = ApiError.PARAMETER_INVALID;
+            error.setMessage("quantity must be positive");
+            return error;
         }
         if (direction == null) {
-            throw new ApiException(ApiError.PARAMETER_INVALID, "invalid param");
+            return ApiError.PARAMETER_INVALID;
         }
+        return ApiError.OK;
     }
 
     @Override

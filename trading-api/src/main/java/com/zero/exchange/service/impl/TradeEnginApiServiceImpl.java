@@ -1,11 +1,15 @@
 package com.zero.exchange.service.impl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zero.exchange.api.ApiError;
 import com.zero.exchange.api.ApiException;
+import com.zero.exchange.api.ApiResult;
 import com.zero.exchange.service.TradeEnginApiService;
 import com.zero.exchange.support.LoggerSupport;
+import com.zero.exchange.util.JsonUtil;
 import okhttp3.*;
 import org.apache.logging.log4j.util.Strings;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -25,7 +29,7 @@ public class TradeEnginApiServiceImpl extends LoggerSupport implements TradeEngi
             .retryOnConnectionFailure(false).build();
 
     @Override
-    public String get(String url) throws IOException {
+    public ApiResult get(String url) throws IOException {
         String reqUrl = tradeEnginEndPoint + url;
         log.info("GET --> {}", reqUrl);
         Request request = new Request.Builder()
@@ -35,16 +39,16 @@ public class TradeEnginApiServiceImpl extends LoggerSupport implements TradeEngi
         try (Response response = httpClient.newCall(request).execute()) {
             if (response.code() != 200) {
                 log.error("url[{}] 请求失败，code[{}]", tradeEnginEndPoint + url, response.code());
-                throw new ApiException(ApiError.OPERATION_TIMEOUT, "服务器请求超时");
+                return ApiResult.failure(ApiError.OPERATION_TIMEOUT.getCode(), "服务器请求超时");
             }
             try (ResponseBody body = response.body()) {
                 String result = body.string();
                 if (Strings.isEmpty(result)) {
                     log.error("服务器请求成功，但返回值为空：{}", result);
-                    throw new ApiException(ApiError.INTERNAL_SERVER_ERROR, "服务器返回为空");
+                    return ApiResult.failure(ApiError.INTERNAL_SERVER_ERROR.getCode(), "服务器返回为空");
                 }
                 log.info("    <-- {}", result);
-                return result;
+                return JsonUtil.readJson(result, ApiResult.class);
             }
         }
     }

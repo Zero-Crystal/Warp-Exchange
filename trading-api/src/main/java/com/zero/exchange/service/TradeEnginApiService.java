@@ -1,5 +1,7 @@
 package com.zero.exchange.service;
 
+import com.zero.exchange.api.ApiResult;
+
 import java.io.IOException;
 
 public interface TradeEnginApiService {
@@ -10,5 +12,5 @@ public interface TradeEnginApiService {
      * @param url
      * @return String
      * */
-    String get(String url) throws IOException;
+    ApiResult get(String url) throws IOException;
 }

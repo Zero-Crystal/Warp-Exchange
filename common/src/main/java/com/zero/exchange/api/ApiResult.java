@@ -19,6 +19,20 @@ public class ApiResult {
         return failure(-100, message);
     }
 
+    public static ApiResult failure(ApiError error) {
+        ApiResult apiResult = new ApiResult();
+        apiResult.setCode(error.getCode());
+        apiResult.setMessage(error.getMessage());
+        return apiResult;
+    }
+
+    public static ApiResult failure(ApiError error, String message) {
+        ApiResult apiResult = new ApiResult();
+        apiResult.setCode(error.getCode());
+        apiResult.setMessage(message);
+        return apiResult;
+    }
+
     public static ApiResult failure(Integer code, String message) {
         ApiResult apiResult = new ApiResult();
         apiResult.setCode(code);

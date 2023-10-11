@@ -21,26 +21,27 @@ public class TransferVO implements ValidatableVO {
 
 
     @Override
-    public void validate() {
+    public ApiError validate() {
         if (IdUtil.isValidStringId(transferId)) {
-            throw new ApiException(ApiError.PARAMETER_INVALID);
+            return ApiError.PARAMETER_INVALID;
         }
         if (type == null) {
-            throw new ApiException(ApiError.PARAMETER_INVALID);
+            return ApiError.PARAMETER_INVALID;
         }
         if (fromUserId == null || fromUserId <= 0) {
-            throw new ApiException(ApiError.PARAMETER_INVALID);
+            return ApiError.PARAMETER_INVALID;
         }
         if (toUserId == null || toUserId <= 0) {
-            throw new ApiException(ApiError.PARAMETER_INVALID);
+            return ApiError.PARAMETER_INVALID;
         }
         if (amount == null) {
-            throw new ApiException(ApiError.PARAMETER_INVALID);
+            return ApiError.PARAMETER_INVALID;
         }
         amount.setScale(AssetType.SCALE);
         if (amount.signum() <= 0) {
-            throw new ApiException(ApiError.PARAMETER_INVALID);
+            return ApiError.PARAMETER_INVALID;
         }
+        return ApiError.OK;
     }
 
     @Override

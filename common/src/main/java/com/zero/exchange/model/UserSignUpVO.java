@@ -1,7 +1,6 @@
 package com.zero.exchange.model;
 
 import com.zero.exchange.api.ApiError;
-import com.zero.exchange.api.ApiException;
 
 public class UserSignUpVO implements ValidatableVO {
 
@@ -12,16 +11,19 @@ public class UserSignUpVO implements ValidatableVO {
     public String password;
 
     @Override
-    public void validate() {
+    public ApiError validate() {
+        ApiError error = ApiError.OK;
         if (email == null) {
-            throw new ApiException(ApiError.PARAMETER_INVALID, "email不能为空");
+            error = ApiError.PARAMETER_INVALID;
+            error.setMessage("email不能为空");
+        } else if (name == null) {
+            error = ApiError.PARAMETER_INVALID;
+            error.setMessage("name不能为空");
+        } else if (password == null) {
+            error = ApiError.PARAMETER_INVALID;
+            error.setMessage("password不能为空");
         }
-        if (name == null) {
-            throw new ApiException(ApiError.PARAMETER_INVALID, "name不能为空");
-        }
-        if (password == null) {
-            throw new ApiException(ApiError.PARAMETER_INVALID, "password不能为空");
-        }
+        return error;
     }
 
     @Override

@@ -1,7 +1,5 @@
 package com.zero.exchange.api.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zero.exchange.api.ApiResult;
 import com.zero.exchange.api.TradeApi;
 import com.zero.exchange.api.ApiError;
@@ -22,6 +20,7 @@ import com.zero.exchange.service.TradeEnginApiService;
 import com.zero.exchange.support.LoggerSupport;
 import com.zero.exchange.user.UserService;
 import com.zero.exchange.util.IdUtil;
+import com.zero.exchange.util.JsonUtil;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -54,9 +53,6 @@ public class TradeApiController extends LoggerSupport implements TradeApi {
     @Autowired
     private UserService userService;
 
-    @Autowired
-    private ObjectMapper objectMapper;
-
     private Map<String, DeferredResult<ResponseEntity<String>>> deferredResultMap = new HashMap<>();
 
     private Long asyncTimeout = Long.valueOf(500);
@@ -78,7 +74,10 @@ public class TradeApiController extends LoggerSupport implements TradeApi {
     @PostMapping(value = "/signup", produces = "application/json")
     public ApiResult signUp(@RequestBody UserSignUpVO userSignUpVO) {
         log.info("注册账号：{}", userSignUpVO.toString());
-        userSignUpVO.validate();
+        ApiError apiError = userSignUpVO.validate();
+        if (apiError.getCode() != ApiError.OK.getCode()) {
+            return ApiResult.failure(apiError);
+        }
         return ApiResult.success(userService.signUp(userSignUpVO.email, userSignUpVO.name, userSignUpVO.password));
     }
 
@@ -86,21 +85,21 @@ public class TradeApiController extends LoggerSupport implements TradeApi {
     @GetMapping(value = "/assets", produces = "application/json")
     public ApiResult getAssets() throws IOException {
         String url = "/internal/" + UserContext.getRequiredUserId() + "/assets";
-        return objectMapper.readValue(tradeEnginApiService.get(url), ApiResult.class);
+        return tradeEnginApiService.get(url);
     }
 
     @Override
     @GetMapping(value = "/orders/{orderId}", produces = "application/json")
     public ApiResult getOpenOrder(@PathVariable Long orderId) throws IOException {
         String url = "/internal/" + UserContext.getRequiredUserId() + "/orders";
-        return objectMapper.readValue(tradeEnginApiService.get(url), ApiResult.class);
+        return tradeEnginApiService.get(url);
     }
 
     @Override
     @GetMapping(value = "/orders", produces = "application/json")
     public ApiResult getOpenOrders() throws IOException {
         String url = "/internal/" + UserContext.getRequiredUserId() + "/orders";
-        return objectMapper.readValue(tradeEnginApiService.get(url), ApiResult.class);
+        return tradeEnginApiService.get(url);
     }
 
     @Override
@@ -125,8 +124,7 @@ public class TradeApiController extends LoggerSupport implements TradeApi {
     public ApiResult getHistoryOrderMatched(@PathVariable Long orderId) throws Exception {
         log.info("获取历史订单[{}]的匹配详情", orderId);
         final Long userId = UserContext.getRequiredUserId();
-        String orderString = tradeEnginApiService.get("/internal/" + userId + "/orders/" + orderId);
-        ApiResult result = objectMapper.readValue(orderString, ApiResult.class);
+        ApiResult result = tradeEnginApiService.get("/internal/" + userId + "/orders/" + orderId);
         if (result.isSuccess()) {
             OrderEntity order = historyService.getHistoryOrder(userId, orderId);
             if (order == null) {
@@ -141,7 +139,15 @@ public class TradeApiController extends LoggerSupport implements TradeApi {
     public DeferredResult<ResponseEntity<String>> createOrder(@RequestBody OrderVO orderVO) throws IOException {
         final Long userId = UserContext.getRequiredUserId();
         log.info("[{}]创建订单：{}", userId, orderVO.toString());
-        orderVO.validate();
+        ResponseEntity<String> timeout = new ResponseEntity<>(getTimeoutJson(), HttpStatus.BAD_REQUEST);
+        DeferredResult<ResponseEntity<String>> deferred = new DeferredResult<>(asyncTimeout, timeout);
+
+        ApiError apiError = orderVO.validate();
+        if (apiError.getCode() != ApiError.OK.getCode()) {
+            ResponseEntity<String> paramInvalid = new ResponseEntity<>(JsonUtil.writeJson(ApiResult.failure(apiError)), HttpStatus.BAD_REQUEST);
+            deferred.setResult(paramInvalid);
+            return deferred;
+        }
 
         final String refId = IdUtil.generateUniqueId();
         var event = new OrderRequestEvent();
@@ -151,27 +157,28 @@ public class TradeApiController extends LoggerSupport implements TradeApi {
         event.direction = orderVO.direction;
         event.userId = userId;
         event.createAt = System.currentTimeMillis();
-
-        ResponseEntity<String> errorResponse = new ResponseEntity<>(getTimeoutJson(), HttpStatus.BAD_REQUEST);
-        DeferredResult<ResponseEntity<String>> deferred = new DeferredResult<>(asyncTimeout, errorResponse);
         deferred.onTimeout(() -> {
             log.warn("订单创建超时：{}", orderVO);
             deferredResultMap.remove(event.refId);
         });
         deferredResultMap.put(event.refId, deferred);
         sendEventService.sendMessage(event);
-        return null;
+        return deferred;
     }
 
     @Override
     @PostMapping(value = "/order/{orderId}/cancel", produces = "application/json")
     public DeferredResult<ResponseEntity<String>> cancelOrder(@PathVariable Long orderId) throws IOException {
         log.info("取消订单[{}]", orderId);
+        ResponseEntity<String> errorResponse = new ResponseEntity<>(getTimeoutJson(), HttpStatus.BAD_REQUEST);
+        DeferredResult<ResponseEntity<String>> deferred = new DeferredResult<>(asyncTimeout, errorResponse);
+
         final Long userId = UserContext.getRequiredUserId();
-        String orderString = tradeEnginApiService.get("/internal/" + userId + "/orders/" + orderId);
-        ApiResult result = objectMapper.readValue(orderString, ApiResult.class);
+        ApiResult result = tradeEnginApiService.get("/internal/" + userId + "/orders/" + orderId);
         if (!result.isSuccess()) {
-            throw new ApiException(ApiError.ORDER_NOT_FOUND, "该订单不存在");
+            ResponseEntity<String> paramInvalid = new ResponseEntity<>(JsonUtil.writeJson(result), HttpStatus.BAD_REQUEST);
+            deferred.setResult(paramInvalid);
+            return deferred;
         }
 
         final String refId = IdUtil.generateUniqueId();
@@ -180,9 +187,6 @@ public class TradeApiController extends LoggerSupport implements TradeApi {
         event.orderId = orderId;
         event.userId = UserContext.getRequiredUserId();
         event.createAt = System.currentTimeMillis();
-
-        ResponseEntity<String> errorResponse = new ResponseEntity<>(getTimeoutJson(), HttpStatus.BAD_REQUEST);
-        DeferredResult<ResponseEntity<String>> deferred = new DeferredResult<>(asyncTimeout, errorResponse);
         deferred.onTimeout(() -> {
             log.warn("订单[orderId: {}, refId: {}]取消超时", orderId, refId);
             deferredResultMap.remove(event.refId);
@@ -238,33 +242,29 @@ public class TradeApiController extends LoggerSupport implements TradeApi {
         return ApiResult.success(getBars(RedisCache.Key.SEC_BARS, start, end));
     }
 
-    private String getTimeoutJson() throws JsonProcessingException {
+    private String getTimeoutJson() {
         if (timeoutJson == null) {
-            timeoutJson = objectMapper.writeValueAsString(new ApiException(ApiError.OPERATION_TIMEOUT, null, ""));
+            timeoutJson = JsonUtil.writeJson(new ApiException(ApiError.OPERATION_TIMEOUT));
         }
         return timeoutJson;
     }
 
     private void onApiResultMessage(String msg) {
         log.info("订阅message: {}", msg);
-        try {
-            ApiResultMessage message = objectMapper.readValue(msg, ApiResultMessage.class);
-            if (message.refId != null) {
-                DeferredResult<ResponseEntity<String>> deferred = deferredResultMap.remove(message.refId);
-                if (deferred != null) {
-                    if (message.error != null) {
-                        String error = objectMapper.writeValueAsString(message.error);
-                        ResponseEntity<String> errorResponse = new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
-                        deferred.setResult(errorResponse);
-                    } else {
-                        String result = objectMapper.writeValueAsString(ApiResult.success(message.result));
-                        ResponseEntity<String> successResponse = new ResponseEntity<>(result, HttpStatus.OK);
-                        deferred.setResult(successResponse);
-                    }
+        ApiResultMessage message = JsonUtil.readJson(msg, ApiResultMessage.class);
+        if (message.refId != null) {
+            DeferredResult<ResponseEntity<String>> deferred = deferredResultMap.remove(message.refId);
+            if (deferred != null) {
+                if (message.error != null) {
+                    String error = JsonUtil.writeJson(message.error);
+                    ResponseEntity<String> errorResponse = new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+                    deferred.setResult(errorResponse);
+                } else {
+                    String result = JsonUtil.writeJson(ApiResult.success(message.result));
+                    ResponseEntity<String> successResponse = new ResponseEntity<>(result, HttpStatus.OK);
+                    deferred.setResult(successResponse);
                 }
             }
-        } catch (Exception e) {
-            log.error("invalid apiResult: {}, {}", msg, e);
         }
     }
 
