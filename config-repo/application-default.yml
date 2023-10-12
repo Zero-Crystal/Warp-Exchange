@@ -1,4 +1,42 @@
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${DB_HOST:localhost}/${DB_NAME:exchange}?useSSL=false&useUnicode=true&characterEncoding=utf8
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:root}
+    hikari:
+      # 自动提交
+      auto-commit: false
+      # 等待连接池分配连接的最大时长（毫秒），超过这个时长还没可用的连接则发生SQLException
+      connection-timeout: ${DB_TIMEOUT:3000}
+      # 指定验证连接有效性的超时时间
+      validation-timeout: ${DB_TIMEOUT:3000}
+      # 一个连接的生命时长（毫秒），超时而且没被使用则被释放（retired）
+      max-lifetime: 600000
+      # 连接池中允许的最大连接数
+      maximum-pool-size: ${DB_POOL_MAX:500}
+      # 连接池中允许的最小连接数
+      minimum-idle: ${DB_POOL_IDEL:1}
+
+  kafka:
+    bootstrap-servers: ${KAFKA_SERVERS:localhost:9092}
+    consumer:
+      # 设置kafka的消费者组
+      group-id: ${KAFKA_CONSUMER_GROUP_ID:}
+      # 自动提交的时间间隔 在spring boot 2.X 版本中这里采用的是值的类型为Duration 需要符合特定的格式，如1S,1M,2H,5D
+      auto-offset-reset: ${KAFKA_CONSUMER_AUTO_OFFSET_RESET:latest}
+      # 表示一次最多抓取 500 条消息
+      max-poll-records: ${KAFKA_CONSUMER_MAX_POLL_RECORDS:500}
+      max-partition-fetch-bytes: ${KAFKA_MAX_PARTITION_FETCH_BYTES:1000000}
+
+  # redis configuration:
+  redis:
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
+    password: ${REDIS_PASSWORD:}
+    database: ${REDIS_DATABASE:0}
+
 # Dev Configuration
 logging:
   level:
-    com.exchange: ${LOGGING_EXCHANGE_LEVEL:DEBUG}
+    com.zero.exchange: ${LOGGING_EXCHANGE_LEVEL:DEBUG}

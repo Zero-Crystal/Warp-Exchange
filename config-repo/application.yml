@@ -1,19 +1,22 @@
-spring:
-  datasource:
-    url: jdbc:mysql://${DB_HOST:localhost}/${DB_NAME:exchange}?useSSL=false&allowMultiQueries=true&useUnicode=true&characterEncoding=utf8
-    username: ${DB_USERNAME:root}
-    password: ${DB_PASSWORD:password}
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    hikari:
-      auto-commit: false
-      connection-timeout: ${DB_TIMEOUT:3000}
-      validation-timeout: ${DB_TIMEOUT:3000}
-      max-lifetime: 600000
-      maximum-pool-size: ${DB_POOL_MAX:500}
-      minimum-idle: ${DB_POOL_IDEL:1}
+server:
+  tomcat:
+    # default tomcat settings:
+    use-forward-headers: ${TOMCAT_USE_FORWARD_HEADERS:true}
+    protocol-header: ${TOMCAT_PROTOCOL_HEADER:x-forwarded-proto}
+
+exchange:
+  config:
+    order-book-depth: ${ORDER_BOOK_DEPTH:100}
+    is-debug-mode: ${IS_DEBUG_MODE:true}
+    hmac-key: ${EXCHANGE_HMAC_KEY:changeThisHmacKey}
+    backup-enable: ${BACKUP_ENABLE:true}
+    backup-path: ${BACKUP_PATH:D:\Software\IDEA\IDEA_Project\Warp-Exchange\build\tradeEgineBackup.json}
+    api-endpoints:
+      trade-api: ${TRADE_API:http://localhost:8001}
+      trade-engin-api: ${TRADE_ENGIN-API:http://localhost:8002}
 
 logging:
   level:
     root: ${LOGGING_ROOT_LEVEL:INFO}
     org.apache.kafka: ${LOGGING_KAFKA_LEVEL:WARN}
-    com.exchange: ${LOGGING_EXCHANGE_LEVEL:INFO}
+    com.zero.exchange: ${LOGGING_EXCHANGE_LEVEL:DEBUG}

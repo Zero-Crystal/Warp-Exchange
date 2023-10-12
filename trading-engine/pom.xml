@@ -4,13 +4,11 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.exchange.trade.engine</groupId>
     <artifactId>trading-engine</artifactId>
-    <version>1.0</version>
 
     <!-- 指定Parent -->
     <parent>
-        <groupId>com.exchange.parent</groupId>
+        <groupId>com.zero.exchange</groupId>
         <artifactId>parent</artifactId>
         <version>1.0</version>
         <!-- Parent POM的相对路径 -->
@@ -24,7 +22,7 @@
         </dependency>
 
         <dependency>
-            <groupId>com.exchange.common</groupId>
+            <groupId>com.zero.exchange</groupId>
             <artifactId>common</artifactId>
             <version>1.0</version>
         </dependency>
