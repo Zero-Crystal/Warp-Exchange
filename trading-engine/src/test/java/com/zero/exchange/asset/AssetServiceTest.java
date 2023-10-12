@@ -1,8 +1,8 @@
 package com.zero.exchange.asset;
 
 import com.zero.exchange.enums.AssetType;
-import com.zero.exchange.asset.entity.Asset;
-import com.zero.exchange.asset.entity.TransferType;
+import com.zero.exchange.asset.model.Asset;
+import com.zero.exchange.asset.model.TransferType;
 import com.zero.exchange.asset.service.AssetServiceImpl;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;

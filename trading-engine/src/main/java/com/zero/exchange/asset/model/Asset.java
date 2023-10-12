@@ -1,4 +1,4 @@
-package com.zero.exchange.asset.entity;
+package com.zero.exchange.asset.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;

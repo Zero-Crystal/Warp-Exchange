@@ -91,6 +91,11 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    public ConcurrentMap<Long, ConcurrentMap<Long, OrderEntity>> getUserOrders() {
+        return userOrders;
+    }
+
+    @Override
     public OrderEntity getOrderByOrderId(Long orderId) {
         return activeOrders.get(orderId);
     }

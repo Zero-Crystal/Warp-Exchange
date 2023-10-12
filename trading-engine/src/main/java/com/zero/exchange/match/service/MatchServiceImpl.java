@@ -62,6 +62,11 @@ public class MatchServiceImpl implements MatchService {
     }
 
     @Override
+    public void refreshMarketPrice(BigDecimal newPrice) {
+        marketPrice = newPrice;
+    }
+
+    @Override
     public void debug() {
         System.out.println();
         System.out.println("----------------------------match----------------------------");

@@ -42,7 +42,7 @@ services:
       - "3306:3306"
     command: --default-authentication-plugin=mysql_native_password
     environment:
-      - MYSQL_ROOT_PASSWORD=password
+      - MYSQL_ROOT_PASSWORD=root
     volumes:
       - "./sql/exchange.sql:/docker-entrypoint-initdb.d/1-schema.sql:ro"
       - "./docker/mysql-data:/var/lib/mysql"

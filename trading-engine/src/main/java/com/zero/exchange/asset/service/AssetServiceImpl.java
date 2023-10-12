@@ -2,8 +2,8 @@ package com.zero.exchange.asset.service;
 
 import com.zero.exchange.enums.AssetType;
 import com.zero.exchange.support.LoggerSupport;
-import com.zero.exchange.asset.entity.Asset;
-import com.zero.exchange.asset.entity.TransferType;
+import com.zero.exchange.asset.model.Asset;
+import com.zero.exchange.asset.model.TransferType;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;

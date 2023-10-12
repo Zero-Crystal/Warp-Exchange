@@ -35,6 +35,11 @@ public interface TradeEnginService {
     boolean transfer(TransferEvent event);
 
     /**
+     * 获取交易引擎最新定序id
+     * */
+    long getLastSequenceId();
+
+    /**
      * 验证消息内部状态
      * */
     void validate();

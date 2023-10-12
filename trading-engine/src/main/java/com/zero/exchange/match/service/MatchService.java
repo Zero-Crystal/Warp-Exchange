@@ -48,5 +48,10 @@ public interface MatchService {
      * */
     BigDecimal getMarketPrice();
 
+    /**
+     * 恢复市场价格
+     * */
+    void refreshMarketPrice(BigDecimal newPrice);
+
     void debug();
 }

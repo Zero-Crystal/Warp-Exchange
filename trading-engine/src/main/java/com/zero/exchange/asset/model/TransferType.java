@@ -1,4 +1,4 @@
-package com.zero.exchange.asset.entity;
+package com.zero.exchange.asset.model;
 
 /**
  * 转账类型

@@ -18,11 +18,14 @@ public class OrderVO implements ValidatableVO {
 
     @Override
     public ApiError validate() {
+        if (direction == null) {
+            return ApiError.PARAMETER_INVALID;
+        }
         if (price == null) {
             return ApiError.PARAMETER_INVALID;
         }
         this.price = this.price.setScale(2, RoundingMode.DOWN);
-        if (price.signum() <= 0) {
+        if (price.signum() < 0) {
             ApiError error = ApiError.PARAMETER_INVALID;
             error.setMessage("price must be positive");
             return error;
@@ -35,9 +38,6 @@ public class OrderVO implements ValidatableVO {
             ApiError error = ApiError.PARAMETER_INVALID;
             error.setMessage("quantity must be positive");
             return error;
-        }
-        if (direction == null) {
-            return ApiError.PARAMETER_INVALID;
         }
         return ApiError.OK;
     }

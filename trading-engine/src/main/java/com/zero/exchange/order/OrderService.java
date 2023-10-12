@@ -37,6 +37,12 @@ public interface OrderService {
     ConcurrentMap<Long, OrderEntity> getActiveOrders();
 
     /**
+     * 获取全部用户订单
+     * @return ConcurrentMap<Long, ConcurrentMap<Long, OrderEntity>>
+     * */
+    ConcurrentMap<Long, ConcurrentMap<Long, OrderEntity>> getUserOrders();
+
+    /**
      * 查询订单
      * @param orderId
      * @return OrderEntity

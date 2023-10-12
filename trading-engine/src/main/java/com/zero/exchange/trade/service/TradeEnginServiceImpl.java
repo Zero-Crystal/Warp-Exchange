@@ -1,5 +1,7 @@
 package com.zero.exchange.trade.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.zero.exchange.match.model.OrderBook;
 import com.zero.exchange.model.OrderBookBean;
 import com.zero.exchange.enums.UserType;
 import com.zero.exchange.enums.AssetType;
@@ -22,8 +24,8 @@ import com.zero.exchange.entity.trade.OrderEntity;
 import com.zero.exchange.redis.RedisCache;
 import com.zero.exchange.redis.RedisService;
 import com.zero.exchange.support.LoggerSupport;
-import com.zero.exchange.asset.entity.Asset;
-import com.zero.exchange.asset.entity.TransferType;
+import com.zero.exchange.asset.model.Asset;
+import com.zero.exchange.asset.model.TransferType;
 import com.zero.exchange.asset.service.AssetService;
 import com.zero.exchange.clearing.ClearingService;
 import com.zero.exchange.match.service.MatchService;
@@ -31,10 +33,13 @@ import com.zero.exchange.store.StoreService;
 import com.zero.exchange.match.model.MatchDetailRecord;
 import com.zero.exchange.match.model.MatchResult;
 import com.zero.exchange.order.OrderService;
+import com.zero.exchange.trade.model.TradeEngineBackupDO;
+import com.zero.exchange.util.FileUtil;
 import com.zero.exchange.util.IpUtil;
 import com.zero.exchange.util.JsonUtil;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
+import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -44,6 +49,7 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 
@@ -79,6 +85,9 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
 
     @Value("${exchange.config.is-debug-mode}")
     boolean isDebugMode = false;
+
+    @Value("${exchange.config.backup-path}")
+    private String backupPath;
 
     MessageProducer<TickMessage> producer;
 
@@ -326,6 +335,11 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
     }
 
     @Override
+    public long getLastSequenceId() {
+        return lastSequenceId;
+    }
+
+    @Override
     public void validate() {
         log.info("--------------------start validate trade system--------------------");
         validateAsset();
@@ -336,11 +350,13 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
 
     @Override
     public void debug() {
+        System.out.println();
         System.out.println("=========================================== trade engin debug ===========================================");
         assetService.debug();
         orderService.debug();
         matchService.debug();
         System.out.println("================================================== end ==================================================");
+        System.out.println();
     }
 
     /**
@@ -682,21 +698,72 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
                 e.printStackTrace();
             }
             System.out.println("------------------------------------------start to recovery trade engine state------------------------------------------");
-            if (lastSequenceId != 0) {
-                log.info("当前 lastSequenceId = {}，引擎状态不需要恢复", lastSequenceId);
+            long startTime = System.currentTimeMillis();
+            String backupJson = FileUtil.loadLocalTxtFile(backupPath);
+            if (Strings.isEmpty(backupJson)) {
+                log.info("未获取到备份文件...");
                 return;
             }
-            List<AbstractEvent> lostEvents = storeService.loadEventsFromDB(lastSequenceId);
-            if (lostEvents.isEmpty()) {
-                log.info("未获取到需要恢复的消息...");
-                return;
+            TradeEngineBackupDO tradeEngineBackup = JsonUtil.readJson(backupJson, TradeEngineBackupDO.class);
+            // 更新定序id
+            if (tradeEngineBackup.sequenceId != 0) {
+                log.info("更新定序id...");
+                lastSequenceId = tradeEngineBackup.sequenceId;
             }
-            // 重新分发消息
-            log.info("正在恢复引擎状态中，lastSequenceId={}，待分发消息数量 {} 条...\n{}", lastSequenceId, lostEvents.size(), lostEvents);
-            for (AbstractEvent e : lostEvents) {
-                processEvent(e);
+            // 更新资产系统：用户ID1: [USD可用, USD冻结, BTC可用, BTC冻结]
+            if (tradeEngineBackup.assets != null) {
+                log.info("更新资产系统...");
+                ConcurrentMap<Long, ConcurrentMap<AssetType, Asset>> userAssetsMap = assetService.getUserAssets();
+                for (Map.Entry<Long, BigDecimal[]> assetEntry : tradeEngineBackup.assets.entrySet()) {
+                    Long userId = assetEntry.getKey();
+                    BigDecimal[] assets = assetEntry.getValue();
+                    ConcurrentMap<AssetType, Asset> assetsMap = new ConcurrentHashMap<>();
+                    assetsMap.put(AssetType.USD, new Asset(assets[0], assets[1]));
+                    assetsMap.put(AssetType.BTC, new Asset(assets[2], assets[3]));
+                    userAssetsMap.put(userId, assetsMap);
+                }
             }
-            System.out.println("--------------------------------------------trade engine state recovery end--------------------------------------------");
+            // 更新订单系统
+            if (tradeEngineBackup.orders != null) {
+                log.info("更新订单系统...");
+                ConcurrentMap<Long, OrderEntity> activeOrders = orderService.getActiveOrders();
+                ConcurrentMap<Long, ConcurrentMap<Long, OrderEntity>> userOrders = orderService.getUserOrders();
+                for (OrderEntity order : tradeEngineBackup.orders) {
+                    // 活跃订单
+                    activeOrders.put(order.id, order);
+                    // 用户订单
+                    Long userId = order.userId;
+                    ConcurrentMap<Long, OrderEntity> userOrderMap = null;
+                    if (userOrders.containsKey(userId)) {
+                        userOrderMap = userOrders.get(userId);
+                    } else {
+                        userOrderMap = new ConcurrentHashMap<>();
+                    }
+                    userOrderMap.put(order.id, order);
+                }
+            }
+            // 更新撮合系统
+            if (tradeEngineBackup.match != null) {
+                log.info("更新撮合系统...");
+                List<Long> buyOrders = tradeEngineBackup.match.BUY;
+                List<Long> sellOrders = tradeEngineBackup.match.SELL;
+
+                // 市场价
+                matchService.refreshMarketPrice(tradeEngineBackup.match.marketPrice);
+                // 买入订单
+                OrderBook BUY = matchService.getOrderBook(Direction.BUY);
+                buyOrders.forEach(oId -> {
+                    BUY.add(orderService.getActiveOrders().get(oId));
+                });
+                // 卖出订单
+                OrderBook SELL = matchService.getOrderBook(Direction.SELL);
+                sellOrders.forEach(oId -> {
+                    SELL.add(orderService.getActiveOrders().get(Long.valueOf(oId)));
+                });
+            }
+            long cost = System.currentTimeMillis() - startTime;
+            System.out.println("--------------------------------------------recovery cost " + cost + " ms--------------------------------------------");
+            debug();
             return;
         });
         thread.start();
