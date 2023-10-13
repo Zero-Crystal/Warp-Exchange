@@ -51,7 +51,7 @@ public class TradeEngineBackupTask extends LoggerSupport {
      *     "match": { ... }
      * }
      * */
-    @Scheduled(cron = "0 */5 * * * *")
+    @Scheduled(cron = "0 */10 * * * *")
     public void tradeEnginBackup() {
         System.out.println();
         System.out.println("----------------------------------------start to backup trade engine----------------------------------------");
@@ -60,7 +60,7 @@ public class TradeEngineBackupTask extends LoggerSupport {
         tradeEngineBackup.assets = getAssetBackup();
         tradeEngineBackup.orders = getOrderBackup();
         tradeEngineBackup.match = getMatchBackup();
-        String backupJson = JsonUtil.writeJson(tradeEngineBackup);
+        String backupJson = JsonUtil.writeJsonWithPrettyPrint(tradeEngineBackup);
         FileUtil.saveStringToLocal(backupJson, backupPath);
         log.info("备份结束...");
     }
@@ -128,13 +128,11 @@ public class TradeEngineBackupTask extends LoggerSupport {
         // BUY
         OrderBook BUY = matchService.getOrderBook(Direction.BUY);
         List<OrderEntity> buyOrders = BUY.book.values().stream().toList();
-        List<Long> buyOrderBookBackup = new ArrayList<>(buyOrders.stream().map(o -> o.id).toList());
-        matchBackup.BUY = buyOrderBookBackup;
+        matchBackup.BUY = new ArrayList<>(buyOrders.stream().map(o1 -> o1.id).toList());
         //SELL
         OrderBook SELL = matchService.getOrderBook(Direction.SELL);
         List<OrderEntity> sellOrders = SELL.book.values().stream().toList();
-        List<Long> sellOrderBookBackup = new ArrayList<>(sellOrders.stream().map(o -> o.id).toList());
-        matchBackup.SELL = sellOrderBookBackup;
+        matchBackup.SELL = new ArrayList<>(sellOrders.stream().map(o -> o.id).toList());
         //marketPrice
         matchBackup.marketPrice = matchService.getMarketPrice();
         return matchBackup;

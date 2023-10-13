@@ -241,7 +241,7 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
 
     @Override
     public void createOrder(OrderRequestEvent event) {
-        log.info("[TRADE-ENGINE] process create message from user[{}]", event.userId);
+        log.info("[Order Create] process create message from user[{}]", event.userId);
         // 创建订单
         ZonedDateTime zonedDateTime = Instant.ofEpochMilli(event.createAt).atZone(zoneId);
         Integer year = zonedDateTime.getYear();
@@ -310,7 +310,7 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
 
     @Override
     public void cancelOrder(OrderCancelEvent event) {
-        log.info("[TRADE-ENGINE] process cancel message from user[{}]", event.userId);
+        log.info("[[Order Cancel]] process cancel message from user[{}]", event.userId);
         OrderEntity order = orderService.getOrderByOrderId(event.orderId);
         // 未找到该订单或该订单不属于该用户
         if (order == null || order.userId.longValue() != event.userId.longValue()) {
@@ -328,7 +328,7 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
 
     @Override
     public boolean transfer(TransferEvent event) {
-        log.info("[TRADE-ENGINE] process transfer message from user[id: {}, type: {}] to user[{}]", event.fromUserId, event.assetType, event.toUserId);
+        log.info("[Asset Transfer] process transfer message from user[id: {}, type: {}] to user[{}]", event.fromUserId, event.assetType, event.toUserId);
         boolean isSuccess = assetService.baseTransfer(TransferType.AVAILABLE_TO_AVAILABLE, event.fromUserId, event.toUserId,
                 event.assetType, event.amount, event.sufficient);
         return isSuccess;
@@ -688,7 +688,6 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
 
     /**
      * 恢复交易引擎的状态：
-     * v1.0：读取数据库中的消息事件并重新分发
      * */
     private void recoveryTradeEngineState() {
         Thread thread = new Thread(() -> {
