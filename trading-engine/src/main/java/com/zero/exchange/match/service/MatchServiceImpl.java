@@ -68,7 +68,6 @@ public class MatchServiceImpl implements MatchService {
 
     @Override
     public void debug() {
-        System.out.println();
         System.out.println("----------------------------match----------------------------");
         System.out.println("market price: " + marketPrice);
         System.out.println("orderBook BUY: \n" + BUY_ORDER_BOOK);

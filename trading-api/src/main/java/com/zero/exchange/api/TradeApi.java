@@ -92,11 +92,31 @@ public interface TradeApi {
      * */
     ApiResult getRecentTicks();
 
+    /**
+     * 获取按天计算的 bar
+     *
+     * @return ApiResult
+     * */
     ApiResult getDayBar();
 
+    /**
+     * 获取按小时计算的 bar
+     *
+     * @return ApiResult
+     * */
     ApiResult getHourBar();
 
+    /**
+     * 获取按分钟计算的 bar
+     *
+     * @return ApiResult
+     * */
     ApiResult getMinBar();
 
+    /**
+     * 获取按秒计算的 bar
+     *
+     * @return ApiResult
+     * */
     ApiResult getSecondBar();
 }

@@ -71,18 +71,18 @@ CREATE TABLE unique_events (
 ) CHARACTER SET utf8 COLLATE utf8_general_ci AUTO_INCREMENT = 1000;
 
 CREATE TABLE api_key_auths (
-     userId BIGINT NOT NULL,
-     apiKey VARCHAR(32) NOT NULL,
-     apiSecret VARCHAR(32) NOT NULL,
-     expiresAt BIGINT NOT NULL,
-     PRIMARY KEY(userId)
+    userId BIGINT NOT NULL,
+    apiKey VARCHAR(32) NOT NULL,
+    apiSecret VARCHAR(32) NOT NULL,
+    expiresAt BIGINT NOT NULL,
+    PRIMARY KEY(userId)
 ) CHARACTER SET utf8 COLLATE utf8_general_ci AUTO_INCREMENT = 1000;
 
 CREATE TABLE password_auths (
-      userId BIGINT NOT NULL,
-      password VARCHAR(100) NOT NULL,
-      random VARCHAR(32) NOT NULL,
-      PRIMARY KEY(userId)
+    userId BIGINT NOT NULL,
+    password VARCHAR(100) NOT NULL,
+    random VARCHAR(32) NOT NULL,
+    PRIMARY KEY(userId)
 ) CHARACTER SET utf8 COLLATE utf8_general_ci AUTO_INCREMENT = 1000;
 
 CREATE TABLE users (
@@ -100,4 +100,44 @@ CREATE TABLE user_profiles (
     updatedAt BIGINT NOT NULL,
     CONSTRAINT UNI_EMAIL UNIQUE (email),
     PRIMARY KEY(userId)
+) CHARACTER SET utf8 COLLATE utf8_general_ci AUTO_INCREMENT = 1000;
+
+CREATE TABLE second_bars (
+    startTime BIGINT NOT NULL,
+    closePrice DECIMAL(36,18) NOT NULL,
+    highPrice DECIMAL(36,18) NOT NULL,
+    lowPrice DECIMAL(36,18) NOT NULL,
+    openPrice DECIMAL(36,18) NOT NULL,
+    quantity DECIMAL(36,18) NOT NULL,
+    PRIMARY KEY(startTime)
+) CHARACTER SET utf8 COLLATE utf8_general_ci AUTO_INCREMENT = 1000;
+
+CREATE TABLE minute_bars (
+    startTime BIGINT NOT NULL,
+    closePrice DECIMAL(36,18) NOT NULL,
+    highPrice DECIMAL(36,18) NOT NULL,
+    lowPrice DECIMAL(36,18) NOT NULL,
+    openPrice DECIMAL(36,18) NOT NULL,
+    quantity DECIMAL(36,18) NOT NULL,
+    PRIMARY KEY(startTime)
+) CHARACTER SET utf8 COLLATE utf8_general_ci AUTO_INCREMENT = 1000;
+
+CREATE TABLE hour_bars (
+    startTime BIGINT NOT NULL,
+    closePrice DECIMAL(36,18) NOT NULL,
+    highPrice DECIMAL(36,18) NOT NULL,
+    lowPrice DECIMAL(36,18) NOT NULL,
+    openPrice DECIMAL(36,18) NOT NULL,
+    quantity DECIMAL(36,18) NOT NULL,
+    PRIMARY KEY(startTime)
+) CHARACTER SET utf8 COLLATE utf8_general_ci AUTO_INCREMENT = 1000;
+
+CREATE TABLE day_bars (
+    startTime BIGINT NOT NULL,
+    closePrice DECIMAL(36,18) NOT NULL,
+    highPrice DECIMAL(36,18) NOT NULL,
+    lowPrice DECIMAL(36,18) NOT NULL,
+    openPrice DECIMAL(36,18) NOT NULL,
+    quantity DECIMAL(36,18) NOT NULL,
+    PRIMARY KEY(startTime)
 ) CHARACTER SET utf8 COLLATE utf8_general_ci AUTO_INCREMENT = 1000;

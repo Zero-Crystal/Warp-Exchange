@@ -133,7 +133,6 @@ public class AssetServiceImpl extends LoggerSupport implements AssetService {
 
     @Override
     public void debug() {
-        System.out.println();
         System.out.println("----------------------------asset----------------------------");
         List<Long> userIds = new ArrayList<>(userAssetsMap.keySet());
         Collections.sort(userIds);
