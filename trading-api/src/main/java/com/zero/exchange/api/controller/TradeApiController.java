@@ -139,12 +139,12 @@ public class TradeApiController extends LoggerSupport implements TradeApi {
     public DeferredResult<ResponseEntity<String>> createOrder(@RequestBody OrderVO orderVO) throws IOException {
         final Long userId = UserContext.getRequiredUserId();
         log.info("[{}]创建订单：{}", userId, orderVO.toString());
-        ResponseEntity<String> timeout = new ResponseEntity<>(getTimeoutJson(), HttpStatus.BAD_REQUEST);
+        ResponseEntity<String> timeout = new ResponseEntity<>(getTimeoutJson(), HttpStatus.INTERNAL_SERVER_ERROR);
         DeferredResult<ResponseEntity<String>> deferred = new DeferredResult<>(asyncTimeout, timeout);
 
         ApiError apiError = orderVO.validate();
         if (apiError.getCode() != ApiError.OK.getCode()) {
-            ResponseEntity<String> paramInvalid = new ResponseEntity<>(JsonUtil.writeJson(ApiResult.failure(apiError)), HttpStatus.BAD_REQUEST);
+            ResponseEntity<String> paramInvalid = new ResponseEntity<>(JsonUtil.writeJson(ApiResult.failure(apiError)), HttpStatus.INTERNAL_SERVER_ERROR);
             deferred.setResult(paramInvalid);
             return deferred;
         }
@@ -170,13 +170,13 @@ public class TradeApiController extends LoggerSupport implements TradeApi {
     @PostMapping(value = "/order/{orderId}/cancel", produces = "application/json")
     public DeferredResult<ResponseEntity<String>> cancelOrder(@PathVariable Long orderId) throws IOException {
         log.info("取消订单[{}]", orderId);
-        ResponseEntity<String> errorResponse = new ResponseEntity<>(getTimeoutJson(), HttpStatus.BAD_REQUEST);
+        ResponseEntity<String> errorResponse = new ResponseEntity<>(getTimeoutJson(), HttpStatus.INTERNAL_SERVER_ERROR);
         DeferredResult<ResponseEntity<String>> deferred = new DeferredResult<>(asyncTimeout, errorResponse);
 
         final Long userId = UserContext.getRequiredUserId();
         ApiResult result = tradeEnginApiService.get("/internal/" + userId + "/orders/" + orderId);
         if (!result.isSuccess()) {
-            ResponseEntity<String> paramInvalid = new ResponseEntity<>(JsonUtil.writeJson(result), HttpStatus.BAD_REQUEST);
+            ResponseEntity<String> paramInvalid = new ResponseEntity<>(JsonUtil.writeJson(result), HttpStatus.INTERNAL_SERVER_ERROR);
             deferred.setResult(paramInvalid);
             return deferred;
         }

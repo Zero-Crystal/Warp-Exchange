@@ -107,7 +107,6 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public void debug() {
-        System.out.println();
         System.out.println("----------------------------order----------------------------");
         List<OrderEntity> orderEntities = new ArrayList<>(activeOrders.values());
         Collections.sort(orderEntities);

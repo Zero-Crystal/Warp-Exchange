@@ -1,6 +1,5 @@
 package com.zero.exchange.trade.service;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.zero.exchange.match.model.OrderBook;
 import com.zero.exchange.model.OrderBookBean;
 import com.zero.exchange.enums.UserType;
@@ -183,7 +182,14 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
     }
 
     @Override
-    public void receiveMessage(List<AbstractEvent> receiveMessages) {
+    public long getLastSequenceId() {
+        return lastSequenceId;
+    }
+
+    /**
+     * 订阅消息
+     * */
+    void receiveMessage(List<AbstractEvent> receiveMessages) {
         isOrderBookUpdate = false;
         for (AbstractEvent message : receiveMessages) {
             processEvent(message);
@@ -193,8 +199,10 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
         }
     }
 
-    @Override
-    public void processEvent(AbstractEvent event) {
+    /**
+     * 处理订阅事件
+     * */
+    void processEvent(AbstractEvent event) {
         if (isSystemError) {
             return;
         }
@@ -239,9 +247,8 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
         }
     }
 
-    @Override
-    public void createOrder(OrderRequestEvent event) {
-        log.info("[TRADE-ENGINE] process create message from user[{}]", event.userId);
+    void createOrder(OrderRequestEvent event) {
+        log.info("[Order Create] process create message from user[{}]", event.userId);
         // 创建订单
         ZonedDateTime zonedDateTime = Instant.ofEpochMilli(event.createAt).atZone(zoneId);
         Integer year = zonedDateTime.getYear();
@@ -308,9 +315,8 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
         }
     }
 
-    @Override
-    public void cancelOrder(OrderCancelEvent event) {
-        log.info("[TRADE-ENGINE] process cancel message from user[{}]", event.userId);
+    void cancelOrder(OrderCancelEvent event) {
+        log.info("[[Order Cancel]] process cancel message from user[{}]", event.userId);
         OrderEntity order = orderService.getOrderByOrderId(event.orderId);
         // 未找到该订单或该订单不属于该用户
         if (order == null || order.userId.longValue() != event.userId.longValue()) {
@@ -326,20 +332,16 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
         apiResultQueue.add(ApiResultMessage.orderSuccess(event.refId, event.createAt, order));
     }
 
-    @Override
-    public boolean transfer(TransferEvent event) {
-        log.info("[TRADE-ENGINE] process transfer message from user[id: {}, type: {}] to user[{}]", event.fromUserId, event.assetType, event.toUserId);
+    boolean transfer(TransferEvent event) {
+        log.info("[Asset Transfer] process transfer message from user[id: {}, type: {}] to user[{}]", event.fromUserId, event.assetType, event.toUserId);
         boolean isSuccess = assetService.baseTransfer(TransferType.AVAILABLE_TO_AVAILABLE, event.fromUserId, event.toUserId,
                 event.assetType, event.amount, event.sufficient);
         return isSuccess;
     }
 
-    @Override
-    public long getLastSequenceId() {
-        return lastSequenceId;
-    }
-
-    @Override
+    /**
+     * 验证消息内部状态
+     * */
     public void validate() {
         log.info("--------------------start validate trade system--------------------");
         validateAsset();
@@ -348,10 +350,10 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
         log.info("--------------------------- validate ok ---------------------------");
     }
 
-    @Override
     public void debug() {
         System.out.println();
         System.out.println("=========================================== trade engin debug ===========================================");
+        System.out.println("current sequenceId is " + lastSequenceId);
         assetService.debug();
         orderService.debug();
         matchService.debug();
@@ -688,7 +690,6 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
 
     /**
      * 恢复交易引擎的状态：
-     * v1.0：读取数据库中的消息事件并重新分发
      * */
     private void recoveryTradeEngineState() {
         Thread thread = new Thread(() -> {
@@ -697,7 +698,7 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            System.out.println("------------------------------------------start to recovery trade engine state------------------------------------------");
+            System.out.println("------------------------------------------start recovery trade engine state------------------------------------------");
             long startTime = System.currentTimeMillis();
             String backupJson = FileUtil.loadLocalTxtFile(backupPath);
             if (Strings.isEmpty(backupJson)) {
@@ -762,7 +763,7 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
                 });
             }
             long cost = System.currentTimeMillis() - startTime;
-            System.out.println("--------------------------------------------recovery cost " + cost + " ms--------------------------------------------");
+            System.out.println("-------------------------------------------------recovery cost " + cost + " ms-------------------------------------------------");
             debug();
             return;
         });
