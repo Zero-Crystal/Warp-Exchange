@@ -266,6 +266,7 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
         MatchResult matchResult = matchService.matchOrder(event.sequenceId, order);
         // 清算
         clearingService.clearingMatchResult(matchResult);
+
         // 推送成功结果，异步推送
         apiResultQueue.add(ApiResultMessage.orderSuccess(event.refId, event.createAt, order.copy()));
         // 收集Notification
@@ -411,7 +412,7 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
     }
 
     /**
-     * redis 发布匹配成功的订单消息
+     * redis 推送匹配成功的订单消息
      * */
     private void runOnNotifyThread() {
         log.info("start to send notification message...");
@@ -419,7 +420,7 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
             NotificationMessage message = this.notificationQueue.poll();
             if (message != null) {
                 if (log.isDebugEnabled()) {
-                    log.debug("使用redis发布一条订单消息: {}", JsonUtil.writeJson(message));
+                    log.debug("使用redis推送一条订单消息: {}", JsonUtil.writeJson(message));
                 }
                 redisService.publish(RedisCache.Topic.NOTIFICATION, JsonUtil.writeJson(message));
             } else {
@@ -560,15 +561,15 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
      *
      * @param ts long 时间戳
      * @param type 消息类型
-     * @param account 用户账号
+     * @param userId 用户账号
      * @param data 消息数据
      * @return NotificationMessage
      * */
-    private NotificationMessage createNotificationMessage(long ts, String type, Long account, Object data) {
+    private NotificationMessage createNotificationMessage(long ts, String type, Long userId, Object data) {
         NotificationMessage message = new NotificationMessage();
         message.createAt = ts;
         message.type = type;
-        message.account = account;
+        message.userId = userId;
         message.data = data;
         return message;
     }
