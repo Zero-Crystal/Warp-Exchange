@@ -98,6 +98,6 @@ if not lastSeqId or tonumber(seqId) > tonumber(lastSeqId) then
     return cjson.encode(persistBars)
 end
 
-redis.log(redis.LOG_WARNING, 'sequence ignored: exist seq => ' .. seq .. ' >= ' .. seqId .. ' <= new seq')
+redis.log(redis.LOG_WARNING, 'sequence ignored: exist seq => ' .. lastSeqId .. ' >= ' .. seqId .. ' <= new seq')
 
 return '{}'

@@ -8,9 +8,8 @@ import io.vertx.redis.client.Command;
 import io.vertx.redis.client.Redis;
 import io.vertx.redis.client.Request;
 import io.vertx.redis.client.Response;
-import io.vertx.redis.client.impl.types.BulkType;
+import io.vertx.redis.client.impl.types.*;
 import jakarta.annotation.PostConstruct;
-import org.apache.logging.log4j.util.Strings;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 

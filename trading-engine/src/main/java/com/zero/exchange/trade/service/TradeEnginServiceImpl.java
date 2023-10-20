@@ -267,6 +267,8 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
         // 清算
         clearingService.clearingMatchResult(matchResult);
 
+        // 订单簿有更新
+        isOrderBookUpdate = true;
         // 推送成功结果，异步推送
         apiResultQueue.add(ApiResultMessage.orderSuccess(event.refId, event.createAt, order.copy()));
         // 收集Notification
@@ -328,6 +330,8 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
         }
         matchService.cancel(event.createAt, order);
         clearingService.clearingCancel(order);
+        // 订单簿有更新
+        isOrderBookUpdate = true;
         // 发送成功消息
         notificationQueue.add(createNotificationMessage(event.createAt, "order_cancel", order.userId, order));
         apiResultQueue.add(ApiResultMessage.orderSuccess(event.refId, event.createAt, order));

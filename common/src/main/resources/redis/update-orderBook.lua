@@ -17,7 +17,7 @@ local data = ARGV[2]
 --获取orderBook上次更新的定序id
 local lastSeqId = redis.call('GET', KEY_LAST_SEQ)
 
-if not lastSeqId and tonumber(seqId) > lastSeqId then
+if not lastSeqId or tonumber(seqId) > tonumber(lastSeqId) then
     --保存新的订单簿定序id
     redis.call("SET", KEY_LAST_SEQ, seqId)
     --保存新的订单簿JSON
