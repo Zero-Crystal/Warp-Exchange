@@ -13,4 +13,4 @@ spring:
       server:
         native:
           # 设置配置文件的搜索路径:
-          search-locations: file:./config-repo, file:../config-repo, file:../../config-repo
+          search-locations: file:./config-repo, file:../config-repo, file:../../config-repo, file:../../../config-repo
