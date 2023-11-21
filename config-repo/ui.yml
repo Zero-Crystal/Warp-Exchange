@@ -1,0 +1,7 @@
+# ui
+server:
+  port: ${APP_PORT:8006}
+
+pebble:
+  prefix: /templates/
+  suffix: .html

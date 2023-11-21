@@ -17,4 +17,9 @@ public class ApiException extends RuntimeException {
         super(error.toString());
         errorResult = ApiResult.failure(error.getCode(), message, data);
     }
+
+    public ApiException(Integer error, String data, String message) {
+        super(error.toString());
+        errorResult = ApiResult.failure(error, message, data);
+    }
 }

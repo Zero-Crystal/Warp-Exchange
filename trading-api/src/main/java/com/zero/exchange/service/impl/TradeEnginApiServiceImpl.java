@@ -1,15 +1,12 @@
 package com.zero.exchange.service.impl;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zero.exchange.api.ApiError;
-import com.zero.exchange.api.ApiException;
 import com.zero.exchange.api.ApiResult;
 import com.zero.exchange.service.TradeEnginApiService;
 import com.zero.exchange.support.LoggerSupport;
 import com.zero.exchange.util.JsonUtil;
 import okhttp3.*;
 import org.apache.logging.log4j.util.Strings;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -19,7 +16,7 @@ import java.util.concurrent.TimeUnit;
 @Service
 public class TradeEnginApiServiceImpl extends LoggerSupport implements TradeEnginApiService {
 
-    @Value("${exchange.config.api-endpoints.trade-engin-api}")
+    @Value("#{exchangeConfiguration.apiEndpoints.tradeEnginApi}")
     private String tradeEnginEndPoint;
 
     private OkHttpClient httpClient = new OkHttpClient.Builder()

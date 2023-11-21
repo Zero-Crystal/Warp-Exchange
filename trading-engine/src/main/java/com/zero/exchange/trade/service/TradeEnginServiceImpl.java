@@ -79,13 +79,13 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
     @Autowired
     MessagingFactory messagingFactory;
 
-    @Value("${exchange.config.order-book-depth}")
+    @Value("#{exchangeConfiguration.orderBookDepth}")
     Integer orderBookDepth = 100;
 
-    @Value("${exchange.config.is-debug-mode}")
-    boolean isDebugMode = false;
+    @Value("#{exchangeConfiguration.debugMode}")
+    boolean debugMode = false;
 
-    @Value("${exchange.config.backup-path}")
+    @Value("#{exchangeConfiguration.backupPath}")
     private String backupPath;
 
     MessageProducer<TickMessage> producer;
@@ -241,7 +241,7 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
         // 更新 lastSequenceId
         this.lastSequenceId = event.sequenceId;
         // debug模式下，验证消息内部状态的完整性
-        if (isDebugMode) {
+        if (debugMode) {
             validate();
             debug();
         }
