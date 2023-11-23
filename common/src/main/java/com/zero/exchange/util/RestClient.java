@@ -64,7 +64,7 @@ public class RestClient {
                 if (!"https".equals(uri.getScheme()) && !"http".equals(uri.getScheme())) {
                     throw new IllegalArgumentException("API Endpoint 不合法: " + apiEndpoint);
                 }
-                if (uri.getPath() != null || !uri.getPath().isEmpty()) {
+                if (uri.getPath() != null && !uri.getPath().isEmpty()) {
                     throw new IllegalArgumentException("API Endpoint 不能包含 path 内容");
                 }
                 this.scheme = uri.getScheme();
@@ -190,7 +190,7 @@ public class RestClient {
                 try(ResponseBody body = response.body()) {
                     String json = body.string();
                     ApiResult error = objectMapper.readValue(json, ApiResult.class);
-                    if (error.getMessage().isEmpty()) {
+                    if (error.getMessage() == null || error.getMessage().isEmpty()) {
                         throw UNKNOWN_ERROR;
                     }
                     throw new ApiException(error.getCode(), objectMapper.writeValueAsString(error.getData()), error.getMessage());

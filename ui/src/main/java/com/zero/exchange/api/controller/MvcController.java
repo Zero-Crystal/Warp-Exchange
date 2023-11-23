@@ -66,12 +66,31 @@ public class MvcController extends LoggerSupport implements MvcApi {
     }
 
     @Override
+    @GetMapping("/")
+    public ModelAndView index() {
+        if (UserContext.getUserId() == null) {
+            return redirect("/signin");
+        }
+        return prepareModelView("index");
+    }
+
+    @Override
     @GetMapping("/signup")
     public ModelAndView showSignupView() {
         if (UserContext.getUserId() != null) {
             return redirect("/");
         }
         return prepareModelView("signup");
+    }
+
+    @Override
+    @GetMapping("/signin")
+    public ModelAndView showSignIn() {
+        Long userId = UserContext.getUserId();
+        if (userId != null) {
+            return redirect("/");
+        }
+        return prepareModelView("signin");
     }
 
     @Override
@@ -103,13 +122,17 @@ public class MvcController extends LoggerSupport implements MvcApi {
     }
 
     @Override
-    @GetMapping("/signin")
-    public ModelAndView showSignIn() {
+    @PostMapping(value = "/websocket/token", produces = "application/json")
+    @ResponseBody
+    public ApiResult requestWebsocketToken() {
         Long userId = UserContext.getUserId();
-        if (userId != null) {
-            return redirect("/");
+        if (userId == null) {
+            log.info("未获取到用户登录信息");
+            return ApiResult.failure("未获取到用户登录信息");
         }
-        return prepareModelView("signin");
+        AuthToken token = new AuthToken(userId, System.currentTimeMillis() + 60_000);
+        String tokenStr = token.toSecureString(hmacKey);
+        return ApiResult.success(tokenStr);
     }
 
     @Override
@@ -118,11 +141,11 @@ public class MvcController extends LoggerSupport implements MvcApi {
                                HttpServletRequest request, HttpServletResponse response) {
         // email校验
         if (email == null || email.isBlank()) {
-            return prepareModelView("signup", Map.of("email", email, "error", "邮箱信息不能为空"));
+            return prepareModelView("signin", Map.of("email", email, "error", "邮箱信息不能为空"));
         }
         // password校验
         if (password == null || password.isBlank()) {
-            return prepareModelView("signup", Map.of("email", email, "error", "密码不合法"));
+            return prepareModelView("signin", Map.of("email", email, "error", "密码不合法"));
         }
         try {
             UserProfileEntity profile = userService.signIn(email, password);
@@ -145,20 +168,6 @@ public class MvcController extends LoggerSupport implements MvcApi {
     public ModelAndView signOut(HttpServletRequest request, HttpServletResponse response) {
         cookieService.deleteSessionCookie(request, response);
         return redirect("/");
-    }
-
-    @Override
-    @PostMapping(value = "/websocket/token", produces = "application/json")
-    @ResponseBody
-    public ApiResult requestWebsocketToken() {
-        Long userId = UserContext.getUserId();
-        if (userId == null) {
-            log.info("未获取到用户登录信息");
-            return ApiResult.failure("未获取到用户登录信息");
-        }
-        AuthToken token = new AuthToken(userId, System.currentTimeMillis() + 60_000);
-        String tokenStr = token.toSecureString(hmacKey);
-        return ApiResult.success("\"" + tokenStr + "\"");
     }
 
     public ModelAndView prepareModelView(String view) {
@@ -204,8 +213,8 @@ public class MvcController extends LoggerSupport implements MvcApi {
 
     private void deposit(Long userId, AssetType type, BigDecimal amount) {
         var transferVO = new TransferVO();
-        transferVO.transferId = HashUtil.sha256(userId + "/" + type.name()
-                + "/" + amount.stripTrailingZeros().toPlainString().substring(0, 32));
+        transferVO.transferId = HashUtil.sha256(userId + "/" + type
+                + "/" + amount.stripTrailingZeros().toPlainString()).substring(0, 32);
         transferVO.type = type;
         transferVO.amount = amount;
         transferVO.fromUserId = UserType.DEBT.getUserType();

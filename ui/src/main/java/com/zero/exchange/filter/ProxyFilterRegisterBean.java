@@ -50,8 +50,6 @@ public class ProxyFilterRegisterBean extends FilterRegistrationBean<Filter> {
             HttpServletRequest request = (HttpServletRequest) servletRequest;
             HttpServletResponse response = (HttpServletResponse) servletResponse;
             Long userId = UserContext.getUserId();
-            String path = request.getRequestURI();
-            log.info("{} {}: -------------> {}", userId, request.getMethod(), path);
             proxyForward(userId, request, response);
         }
 
@@ -88,7 +86,6 @@ public class ProxyFilterRegisterBean extends FilterRegistrationBean<Filter> {
             Map<String, String> paramMap = new HashMap<>();
             params.forEach((key, values) -> {
                 paramMap.put(key, values[0]);
-                log.info("{} -> {}", key, values);
             });
             return paramMap;
         }

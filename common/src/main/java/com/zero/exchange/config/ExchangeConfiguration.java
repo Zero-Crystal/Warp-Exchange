@@ -79,7 +79,7 @@ public class ExchangeConfiguration {
         this.apiEndpoints = apiEndpoints;
     }
 
-    public class ApiEndpoints {
+    public static class ApiEndpoints {
 
         private String tradeApi;
 

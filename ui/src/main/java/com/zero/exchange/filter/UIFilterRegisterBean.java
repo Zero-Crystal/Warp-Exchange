@@ -36,9 +36,6 @@ public class UIFilterRegisterBean extends FilterRegistrationBean<Filter> {
         public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
             HttpServletRequest request = (HttpServletRequest) servletRequest;
             HttpServletResponse response = (HttpServletResponse) servletResponse;
-            if (log.isDebugEnabled()) {
-                log.debug("start to do ui filter...");
-            }
             // set default request encoding
             request.setCharacterEncoding("UTF-8");
             response.setCharacterEncoding("UTF-8");
@@ -46,13 +43,9 @@ public class UIFilterRegisterBean extends FilterRegistrationBean<Filter> {
             // get token from cookie
             AuthToken auth = cookieService.findTokenInCookie(request);
             if (auth != null && auth.isAboutToExpire()) {
-                log.info("refresh cookie token");
                 auth.refresh();
             }
             Long userId = auth == null ? null : auth.userId();
-            if (log.isDebugEnabled()) {
-                log.debug("parsed userId: {} from cookie", userId);
-            }
             try(UserContext context = new UserContext(userId)) {
                 filterChain.doFilter(request, response);
             }

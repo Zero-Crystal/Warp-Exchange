@@ -7,6 +7,13 @@ import org.springframework.web.servlet.ModelAndView;
 public interface MvcApi {
 
     /**
+     * 首页
+     *
+     * @return ModelAndView
+     * */
+    ModelAndView index();
+
+    /**
      * 注册页面
      *
      * @return ModelAndView

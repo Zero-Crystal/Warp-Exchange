@@ -43,7 +43,7 @@ public class TradeEngineBackupTask extends LoggerSupport {
     private String backupPath;
 
     /**
-     * 交易引擎状态备份，每隔10分钟备份一次：
+     * 交易引擎状态备份，每隔 5分钟备份一次：
      * {
      *     "sequenceId": 189000,
      *     "assets": { ... },
@@ -51,7 +51,7 @@ public class TradeEngineBackupTask extends LoggerSupport {
      *     "match": { ... }
      * }
      * */
-    @Scheduled(cron = "0 */10 * * * *")
+    @Scheduled(cron = "0 */5 * * * *")
     public void tradeEnginBackup() {
         System.out.println();
         System.out.println("----------------------------------------start to backup trade engine----------------------------------------");

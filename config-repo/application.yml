@@ -14,7 +14,7 @@ exchange:
     backup-path: ${BACKUP_PATH:D:\Software\IDEA\IDEA_Project\Warp-Exchange\build\tradeEgineBackup.json}
     api-endpoints:
       trade-api: ${TRADE_API:http://localhost:8001}
-      trade-engin-api: ${TRADE_ENGIN-API:http://localhost:8002}
+      trade-engin-api: ${TRADE_ENGIN_API:http://localhost:8002}
 
 logging:
   level:
