@@ -1,5 +1,8 @@
 package com.zero.exchange.api;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public enum ApiError {
 
     INTERNAL_SERVER_ERROR(-100, "服务器异常"),
@@ -44,4 +47,5 @@ public enum ApiError {
     public void setMessage(String message) {
         this.message = message;
     }
+
 }

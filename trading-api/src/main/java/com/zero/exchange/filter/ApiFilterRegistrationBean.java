@@ -42,6 +42,7 @@ public class ApiFilterRegistrationBean extends FilterRegistrationBean<Filter> {
         setFilter(filter);
         addUrlPatterns("/api/*");
         setName(filter.getClass().getSimpleName());
+        // 设置Filter的执行顺序，数字越小的Filter越先执行
         setOrder(100);
     }
 

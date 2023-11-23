@@ -9,11 +9,12 @@ exchange:
     order-book-depth: ${ORDER_BOOK_DEPTH:100}
     is-debug-mode: ${IS_DEBUG_MODE:true}
     hmac-key: ${EXCHANGE_HMAC_KEY:changeThisHmacKey}
+    session-timeout: ${EXCHANGE_SESSION_TIMEOUT:P3D}
     backup-enable: ${BACKUP_ENABLE:true}
     backup-path: ${BACKUP_PATH:D:\Software\IDEA\IDEA_Project\Warp-Exchange\build\tradeEgineBackup.json}
     api-endpoints:
       trade-api: ${TRADE_API:http://localhost:8001}
-      trade-engin-api: ${TRADE_ENGIN-API:http://localhost:8002}
+      trade-engin-api: ${TRADE_ENGIN_API:http://localhost:8002}
 
 logging:
   level:
