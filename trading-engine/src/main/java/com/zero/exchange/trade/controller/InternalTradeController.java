@@ -45,7 +45,6 @@ public class InternalTradeController extends LoggerSupport implements InternalTr
     public ApiResult getOrders(@PathVariable Long userId) {
         ConcurrentMap<Long, OrderEntity> userOrders = orderService.getOrderMapByUserId(userId);
         if (userOrders == null || userOrders.isEmpty()) {
-            log.info("未获取到用户[{}]的订单信息", userId);
             return ApiResult.failure("未获取到该用户的订单信息");
         }
         List<OrderEntity> orderList = new ArrayList<>();
