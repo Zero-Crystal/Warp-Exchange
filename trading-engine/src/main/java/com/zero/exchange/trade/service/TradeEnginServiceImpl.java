@@ -744,6 +744,7 @@ public class TradeEnginServiceImpl extends LoggerSupport implements TradeEnginSe
                         userOrderMap = userOrders.get(userId);
                     } else {
                         userOrderMap = new ConcurrentHashMap<>();
+                        userOrders.put(userId, userOrderMap);
                     }
                     userOrderMap.put(order.id, order);
                 }

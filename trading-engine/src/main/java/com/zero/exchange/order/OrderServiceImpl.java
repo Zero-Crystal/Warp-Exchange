@@ -57,14 +57,14 @@ public class OrderServiceImpl implements OrderService {
         orderEntity.quantity = orderEntity.unfilledQuantity = quantity;
         orderEntity.createdAt = orderEntity.updateAt = createTime;
         // 添加到活动的订单
-        activeOrders.put(orderId, orderEntity);
+        activeOrders.put(orderEntity.id, orderEntity);
         // 添加到用户所有活动的订单
-        ConcurrentMap<Long, OrderEntity> orderMap = userOrders.get(userId);
-        if (orderMap == null) {
-            orderMap = new ConcurrentHashMap<>();
-            userOrders.put(userId, orderMap);
+        ConcurrentMap<Long, OrderEntity> userOrders = this.userOrders.get(userId);
+        if (userOrders == null) {
+            userOrders = new ConcurrentHashMap<>();
+            this.userOrders.put(userId, userOrders);
         }
-        orderMap.put(orderId, orderEntity);
+        userOrders.put(orderEntity.id, orderEntity);
         return orderEntity;
     }
 

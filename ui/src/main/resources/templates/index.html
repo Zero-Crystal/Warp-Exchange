@@ -59,7 +59,6 @@ async function request(method, path, data) {
 			contentType: 'application/json',
 			dataType: 'json'
 		});
-		console.log(result);
 		if (result.code != 200) {
 			showError(result.message);
 			return;
@@ -84,7 +83,6 @@ function showInfo(msg, err) {
 	window._nextNotificationId = nextId + 1;
 	let notificationId = 'notification' + nextId;
 	let template = $('#notificationTemplate').html().replace('notification', notificationId);
-	console.log(template);
 	$('#notificationContainer').append(template);
 	let $div = $('#' + notificationId);
 	let div = $div.get(0);
@@ -178,7 +176,7 @@ async function initChart() {
 	// 从REST API获取分钟K:
 	let dataList = [];
 	try {
-		dataList = Array.from(await get('/api/bar/minute'));
+		dataList = await get('/api/bar/minute');
 	} catch (err) {
 		console.error('load bars failed: ' + err);
 	}
@@ -222,7 +220,6 @@ function initWebSocket() {
 	setWsStatus('connecting');
 	// 获取WebSocket Token:
 	post('/websocket/token', '').then(token => {
-		console.log(`websocket token: ${token}`);
 		doInitWebSocket(token);
 	}).catch(err => {
 		console.error(err);
@@ -234,12 +231,10 @@ function doInitWebSocket(token) {
 	window.wsNotification = new WebSocket('ws://localhost:8005/notification?token=' + token);
 	// 已连接事件:
 	window.wsNotification.onopen = function () {
-		console.log('ws: connected.');
 		setWsStatus('connected');
 	};
 	// 已关闭事件:
 	window.wsNotification.onclose = function () {
-		console.log('ws: disconnected.');
 		setWsStatus('disconnected');
 		closeWebSocket();
 		window.wsTimeoutId = setTimeout(initWebSocket, 10000);
@@ -254,7 +249,6 @@ function doInitWebSocket(token) {
 	}
 	// 消息事件:
 	window.wsNotification.onmessage = function (event) {
-		console.log('ws event: ' + event.data);
 		try {
 			// 由Vue App处理消息:
 			window.app.onPush(JSON.parse(event.data)).then(() => console.log('process push ok.')).catch(err => console.error(err));
@@ -336,10 +330,8 @@ function initApp() {
 			},
 			// 调用REST API刷新资产:
 			refreshAssets: async function () {
-				console.log("start to refresh asset");
 				try {
 					this.assets = await get('/api/assets');
-					console.log("asset: ", this.assets);
 				} catch (err) {
 					return showError(err.message || err.error || 'Error');
 				}
@@ -347,12 +339,14 @@ function initApp() {
 			// 调用REST API刷新OrderBook:
 			refreshOrderBook: async function () {
 				try {
-					let book = await get('/api/orderBook');
+					let bookStr = await get('/api/orderBook');
+					let book = JSON.parse(bookStr);
 					this.orderBook.buy = fillOrderBook('BUY', book.buy);
 					this.orderBook.sell = fillOrderBook('SELL', book.sell);
 					this.maxDepth = findMax(book.buy, book.sell);
 					this.orderBook.price = book.price;
 				} catch (err) {
+					console.log("刷新订单簿：错误- ", err);
 					return showError(err);
 				}
 			},

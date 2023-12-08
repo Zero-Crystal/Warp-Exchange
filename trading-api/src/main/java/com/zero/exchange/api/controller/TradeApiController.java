@@ -1,5 +1,6 @@
 package com.zero.exchange.api.controller;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.zero.exchange.api.ApiResult;
 import com.zero.exchange.api.TradeApi;
 import com.zero.exchange.api.ApiError;
@@ -29,10 +30,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.async.DeferredResult;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.StringJoiner;
+import java.util.*;
 
 @RestController
 @RequestMapping("/api")
@@ -73,7 +71,6 @@ public class TradeApiController extends LoggerSupport implements TradeApi {
     @Override
     @PostMapping(value = "/signup", produces = "application/json")
     public ApiResult signUp(@RequestBody UserSignUpVO userSignUpVO) {
-        log.info("注册账号：{}", userSignUpVO.toString());
         ApiError apiError = userSignUpVO.validate();
         if (apiError.getCode() != ApiError.OK.getCode()) {
             return ApiResult.failure(apiError);
@@ -112,7 +109,6 @@ public class TradeApiController extends LoggerSupport implements TradeApi {
     @Override
     @GetMapping(value = "/history/orders", produces = "application/json")
     public ApiResult getHistoryOrder(@RequestParam(name = "maxResult", defaultValue = "50", required = false) int maxResult) {
-        log.info("获取用户[{}]的历史订单，返回结果数量[{}]", UserContext.getRequiredUserId(), maxResult);
         if (maxResult < 1 || maxResult > 1000) {
             return ApiResult.failure("参数不合法");
         }
@@ -122,7 +118,6 @@ public class TradeApiController extends LoggerSupport implements TradeApi {
     @Override
     @GetMapping(value = "/history/orders/{orderId}", produces = "application/json")
     public ApiResult getHistoryOrderMatched(@PathVariable Long orderId) throws Exception {
-        log.info("获取历史订单[{}]的匹配详情", orderId);
         final Long userId = UserContext.getRequiredUserId();
         ApiResult result = tradeEnginApiService.get("/internal/" + userId + "/orders/" + orderId);
         if (result.isSuccess()) {
@@ -138,7 +133,6 @@ public class TradeApiController extends LoggerSupport implements TradeApi {
     @PostMapping(value = "/orders/create", produces = "application/json")
     public DeferredResult<ResponseEntity<String>> createOrder(@RequestBody OrderVO orderVO) throws IOException {
         final Long userId = UserContext.getRequiredUserId();
-        log.info("[{}]创建订单：{}", userId, orderVO.toString());
         ResponseEntity<String> timeout = new ResponseEntity<>(getTimeoutJson(), HttpStatus.INTERNAL_SERVER_ERROR);
         DeferredResult<ResponseEntity<String>> deferred = new DeferredResult<>(asyncTimeout, timeout);
 
@@ -169,7 +163,6 @@ public class TradeApiController extends LoggerSupport implements TradeApi {
     @Override
     @PostMapping(value = "/order/{orderId}/cancel", produces = "application/json")
     public DeferredResult<ResponseEntity<String>> cancelOrder(@PathVariable Long orderId) throws IOException {
-        log.info("取消订单[{}]", orderId);
         ResponseEntity<String> errorResponse = new ResponseEntity<>(getTimeoutJson(), HttpStatus.INTERNAL_SERVER_ERROR);
         DeferredResult<ResponseEntity<String>> deferred = new DeferredResult<>(asyncTimeout, errorResponse);
 
@@ -268,15 +261,16 @@ public class TradeApiController extends LoggerSupport implements TradeApi {
         }
     }
 
-    private String getBars(String key, long start, long end) {
+    private List<List<Long>> getBars(String key, long start, long end) {
         List<String> strResult = redisService.zRangeByScore(key, start, end);
         if (strResult == null || strResult.isEmpty()) {
-            return "[]";
+            return Collections.EMPTY_LIST;
         }
-        StringJoiner sj = new StringJoiner(", ", "[", "]");
-        for (String result : strResult) {
-            sj.add(result);
+        List<List<Long>> barsList = new ArrayList<>();
+        for (String barStr : strResult) {
+            List<Long> bar = JsonUtil.readJson(barStr, new TypeReference<List<Long>>() {});
+            barsList.add(bar);
         }
-        return sj.toString();
+        return barsList;
     }
 }

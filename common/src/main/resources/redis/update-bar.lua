@@ -30,9 +30,9 @@
 
 local function merge(existBar, newBar)
     --highPrice
-    existBar[3] = Math.max(existBar[3], newBar[3])
+    existBar[3] = math.max(existBar[3], newBar[3])
     --lowPrice
-    existBar[4] = Math.min(existBar[4], newBar[4])
+    existBar[4] = math.min(existBar[4], newBar[4])
     --closePrice
     existBar[5] = newBar[5]
     --quantity
@@ -50,16 +50,17 @@ local function tryMergeLast(barType, seqId, zsetBars, timestamp, newBar)
         redis.call('ZADD', zsetBars, timestamp, cjson.encode(newBar))
         redis.call('PUBLISH', topic, '{"type":"bar","resolution":"'..barType..'","sequenceId":'..seqId..',"data":'.. cjson.encode(newBar) .. '}')
     else
-        popedScore = poped[1]
-        popedBar = poped[2]
+        popedScore = tonumber(poped[2])
+        popedBar = cjson.decode(poped[1])
         if popedScore == timestamp then
             -- 合并Bar并发送通知:
             merge(popedBar, newBar)
-            redis.call('PUBLISH', topic, '{"type":"bar","resolution":"'..barType..'","sequenceId":'..seqId..',"data":'.. cjson.encode(newBar) .. '}')
+            redis.call('ZADD', zsetBars, popedScore, cjson.encode(popedBar))
+            redis.call('PUBLISH', topic, '{"type":"bar","resolution":"'..barType..'","sequenceId":'..seqId..',"data":'.. cjson.encode(popedBar) .. '}')
         else
             if popedScore < timestamp then
                 -- 可持久化最后一个Bar，生成新的Bar:
-                redis.call('ZADD', zsetBars, timestamp, cjson.encode(newBar))
+                redis.call('ZADD', zsetBars, popedScore, cjson.encode(popedBar), timestamp, cjson.encode(newBar))
                 redis.call('PUBLISH', topic, '{"type":"bar","resolution":"'..barType..'","sequenceId":'..seqId..',"data":'.. cjson.encode(newBar) .. '}')
             end
         end
@@ -78,12 +79,12 @@ local persistBars = {}
 local lastSeqId = redis.call('GET', KEY_BAR_SEQ)
 if not lastSeqId or tonumber(seqId) > tonumber(lastSeqId) then
     zsetBars = { KEYS[1], KEYS[2], KEYS[3], KEYS[4] }
-    barTypeStartTimes = { ARGV[2], ARGV[3], ARGV[4], ARGV[5] }
-    openPrice = ARGV[6]
-    highPrice = ARGV[7]
-    lowPrice = ARGV[8]
-    closePrice = ARGV[9]
-    quantity = ARGV[10]
+    barTypeStartTimes = { tonumber(ARGV[2]), tonumber(ARGV[3]), tonumber(ARGV[4]), tonumber(ARGV[5]) }
+    openPrice = tonumber(ARGV[6])
+    highPrice = tonumber(ARGV[7])
+    lowPrice = tonumber(ARGV[8])
+    closePrice = tonumber(ARGV[9])
+    quantity = tonumber(ARGV[10])
 
     local i, bar
     local names = { 'SEC', 'MIN', 'HOUR', 'DAY' }

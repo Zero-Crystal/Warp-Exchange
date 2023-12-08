@@ -6,14 +6,14 @@ public class OrderBookItemBean {
 
     public BigDecimal price;
 
-    public BigDecimal quality;
+    public BigDecimal quantity;
 
-    public OrderBookItemBean(BigDecimal price, BigDecimal quality) {
+    public OrderBookItemBean(BigDecimal price, BigDecimal quantity) {
         this.price = price;
-        this.quality = quality;
+        this.quantity = quantity;
     }
 
     public void addQuality(BigDecimal quality) {
-        this.quality = this.quality.add(quality);
+        this.quantity = this.quantity.add(quality);
     }
 }

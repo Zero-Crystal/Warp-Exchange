@@ -1,7 +1,12 @@
 package com.zero.exchange.aop;
 
+import com.zero.exchange.util.JsonUtil;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.aspectj.lang.JoinPoint;
+import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.annotation.After;
+import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Before;
 import org.aspectj.lang.reflect.MethodSignature;
@@ -47,5 +52,18 @@ public class LogAspect {
         log.info(logStart + "url: " + url);
         String padding = new String(new char[logStart.length()]).replace('\0', ' ');
         log.info(padding + "params: {" + paramBuilder + "}");
+    }
+
+    @Around("execution(public * com.zero.exchange.*.controller.*.*(..))")
+    public Object doInAfter(ProceedingJoinPoint joinPoint) throws Throwable {
+        ServletRequestAttributes servletRequestAttributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        HttpServletRequest request = servletRequestAttributes.getRequest();
+        String method = request.getMethod();
+        MethodSignature methodSignature = (MethodSignature) joinPoint.getSignature();
+        String functionName = methodSignature.getName();
+        Object result = joinPoint.proceed();
+        String logStart = functionName + ": " + method + " <---- ";
+        log.info(logStart + "response: " + JsonUtil.writeJson(result));
+        return result;
     }
 }

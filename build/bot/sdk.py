@@ -64,8 +64,7 @@ class ApiClient(object):
         try:
             with request.urlopen(req, timeout=self._timeout) as f:
                 s = f.read()
-                r = json.loads(s.decode('utf-8'),
-                               object_hook=lambda d: Dict(**d))
+                r = json.loads(s.decode('utf-8'), object_hook=lambda d: Dict(**d))
                 if self._debug:
                     self.debug('Response:\n' + json.dumps(r))
                 return r

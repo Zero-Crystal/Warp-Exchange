@@ -36,28 +36,38 @@ def main():
     while True:
         try:
             world_price = get_world_price()
-            active_orders = client.get('/api/orders')
+            active_orders_response = client.get('/api/orders')
+            active_orders = active_orders_response.data
+            log('----> start to 过滤 orders')
             buy_orders = [
                 order for order in active_orders if order.direction == 'BUY']
             sell_orders = [
                 order for order in active_orders if order.direction == 'SELL']
             if len(buy_orders) > 10:
+                log("----> 取消 BUY orders")
                 buy_orders.sort(key=lambda order: order.price)
-                client.post(f'/api/orders/{buy_orders[0].id}/cancel')
+                client.post(f'/api/order/{buy_orders[0].id}/cancel')
                 time.sleep(PAUSE_TIME)
             if len(sell_orders) > 10:
+                log("----> 取消 SELL orders")
                 sell_orders.sort(key=lambda order: order.price, reverse=True)
-                client.post(f'/api/orders/{sell_orders[0].id}/cancel')
+                client.post(f'/api/order/{sell_orders[0].id}/cancel')
                 time.sleep(PAUSE_TIME)
+            if len(len(buy_orders)) > 10 and len(sell_orders) > 10:
+                log("-----------------------交易结束-----------------------")
+                break
 
-            client.post('/api/orders', dict(price=randomPrice(world_price,
+            client.post('/api/orders/create', dict(price=randomPrice(world_price,
                         'BUY'), quantity=randomQuantity(), direction='BUY'))
+            log("----> start BUY orders")
             time.sleep(PAUSE_TIME)
 
-            client.post('/api/orders', dict(price=randomPrice(world_price,
+            client.post('/api/orders/create', dict(price=randomPrice(world_price,
                         'SELL'), quantity=randomQuantity(), direction='SELL'))
+            log("start SELL orders")
             time.sleep(PAUSE_TIME)
         except Exception as e:
+            log('运行出错...')
             log(e)
             time.sleep(PAUSE_TIME)
 
