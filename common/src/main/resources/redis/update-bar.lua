@@ -30,9 +30,9 @@
 
 local function merge(existBar, newBar)
     --highPrice
-    existBar[3] = Math.max(existBar[3], newBar[3])
+    existBar[3] = math.max(existBar[3], newBar[3])
     --lowPrice
-    existBar[4] = Math.min(existBar[4], newBar[4])
+    existBar[4] = math.min(existBar[4], newBar[4])
     --closePrice
     existBar[5] = newBar[5]
     --quantity
